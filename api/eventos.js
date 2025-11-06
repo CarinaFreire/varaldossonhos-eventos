@@ -1,4 +1,4 @@
-// /api/eventos.js
+// /api/eventos.js — versão robusta (NÃO envia filterByFormula quando vazio)
 import Airtable from "airtable";
 export const config = { runtime: "nodejs" };
 
@@ -13,24 +13,37 @@ export default async function handler(req, res) {
       .base(process.env.AIRTABLE_BASE_ID);
     const table = process.env.AIRTABLE_EVENTOS_TABLE || "eventos";
 
-    // filtro opcional por status
-    const status = (req.query.status || "").trim().toLowerCase();
-    const filtros = [];
-    if (status) {
-      // permitidos: em andamento | proximo | encerrado
-      if (!["em andamento", "proximo", "encerrado"].includes(status)) {
-        return res.status(400).json({ sucesso: false, mensagem: "Status inválido" });
-      }
-      filtros.push(`{status_evento}='${status}'`);
+    // --- Query params ---
+    const statusRaw       = (req.query.status || "").trim().toLowerCase(); // em andamento | proximo | encerrado
+    const destacadosOnly  = String(req.query.destacados || "").toLowerCase() === "true";
+    const order           = (req.query.order || "asc").toLowerCase();      // asc | desc
+    const destacadosFirst = String(req.query.destacados_first || "").toLowerCase() === "true";
+    const limit           = Number.parseInt(req.query.limit, 10);
+    const limitSafe       = Number.isFinite(limit) && limit > 0 ? limit : null;
+
+    if (statusRaw && !["em andamento", "proximo", "encerrado"].includes(statusRaw)) {
+      return res.status(400).json({ sucesso: false, mensagem: "Status inválido." });
     }
-    const filterByFormula = filtros.length ? `AND(${filtros.join(",")})` : undefined;
+    if (!["asc", "desc"].includes(order)) {
+      return res.status(400).json({ sucesso: false, mensagem: "Parâmetro 'order' inválido (use asc|desc)." });
+    }
 
-    const records = await base(table).select({
-      filterByFormula,
-      // sem 'fields' e sem 'sort' para evitar UNKNOWN_FIELD_NAME se renomearem colunas
-    }).all();
+    // Monta formula (string) só se necessário
+    const filtros = [];
+    if (statusRaw)      filtros.push(`{status_evento}='${statusRaw}'`);
+    if (destacadosOnly) filtros.push(`{destacar_na_homepage}=1`);
 
-    const eventos = records.map(r => {
+    const selectOpts = {};
+    if (filtros.length) {
+      // Airtable exige string aqui — nada de undefined
+      selectOpts.filterByFormula = `AND(${filtros.join(",")})`;
+    }
+
+    // Busca crua para evitar UNKNOWN_FIELD_NAME se renomearem colunas
+    const records = await base(table).select(selectOpts).all();
+
+    // Mapeia p/ o front
+    let eventos = records.map(r => {
       const f = r.fields || {};
       return {
         airtable_id: r.id,
@@ -41,18 +54,29 @@ export default async function handler(req, res) {
         local_evento: f.local_evento ?? "",
         endereco: f.endereco ?? "",
         data_evento: f.data_evento ?? null,
-        data_fim: f.data_fim ?? null,
+        data_fim:    f.data_fim ?? null,
         imagem: Array.isArray(f.imagem) ? f.imagem : [],
         destacar_na_homepage: !!f.destacar_na_homepage,
       };
     });
 
-    // Ordena por data_evento (nulos no fim)
+    // Remove itens vazios
+    eventos = eventos.filter(ev =>
+      (ev.nome_evento && ev.nome_evento.trim()) || ev.data_evento
+    );
+
+    // Ordenações
+    if (destacadosFirst) {
+      eventos.sort((a, b) => (b.destacar_na_homepage ? 1 : 0) - (a.destacar_na_homepage ? 1 : 0));
+    }
     eventos.sort((a, b) => {
-      const da = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
-      const db = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
-      return da - db;
+      const va = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
+      const vb = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
+      const cmp = va - vb;
+      return order === "asc" ? cmp : -cmp;
     });
+
+    if (limitSafe) eventos = eventos.slice(0, limitSafe);
 
     res.status(200).json({ sucesso: true, eventos });
   } catch (e) {
@@ -60,4 +84,3 @@ export default async function handler(req, res) {
     res.status(500).json({ sucesso: false, mensagem: "Erro ao listar eventos.", detalhe: e.message });
   }
 }
-
