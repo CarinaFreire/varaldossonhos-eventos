@@ -1,38 +1,29 @@
 // /js/eventos.js — consome a API do Vercel: /api/eventos
 console.log("[eventos] carregado");
 
-// Em produção (Vercel) a API está na mesma origem: /api/eventos
-// Se você abrir o HTML em file:// durante testes, não vai funcionar.
-// Teste pelo Vercel (Preview/Production) ou por um servidor estático simples.
 const API_URL = "/api/eventos";
-
 function $(id){ return document.getElementById(id); }
 
-function formatarData(iso){
-  if(!iso) return "-";
-  const d = new Date(iso);
-  if(isNaN(d)) return "-";
-  return new Intl.DateTimeFormat("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric"}).format(d);
+// formata 'YYYY-MM-DD' em 'DD/MM/AAAA' sem usar Date()
+function formatarData(dateStr){
+  if(!dateStr) return null;
+  const s = String(dateStr).split("T")[0];
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if(!m) return null;
+  const [, y, mo, d] = m;
+  return `${d}/${mo}/${y}`;
 }
 
 function badgeClasse(status){
   if(!status) return "badge";
   const s = status.toLowerCase();
   if(s === "em andamento") return "badge andamento";
-  if(s === "proximo")       return "badge proximo";
-  if(s === "encerrado")     return "badge encerrado";
+  if(s === "proximo" || s === "em breve") return "badge proximo";
+  if(s === "encerrado") return "badge encerrado";
   return "badge";
 }
 
-function rotuloStatus(status){
-  if(!status) return "-";
-  const s = status.toLowerCase();
-  if(s === "proximo") return "próximo"; // exibe com acento
-  return status; // "em andamento", "encerrado"
-}
-
 function primeiraImagem(ev){
-  // servidor devolve "imagem" (array de anexos do Airtable)
   return (ev.imagem && ev.imagem[0] && ev.imagem[0].url)
     ? ev.imagem[0].url
     : "../imagens/placeholder-evento.jpg";
@@ -40,7 +31,21 @@ function primeiraImagem(ev){
 
 function cardEvento(ev){
   const img = primeiraImagem(ev);
-  const status = ev.status_evento;
+  const status = ev.status_evento || "";
+  const iniFmt = formatarData(ev.data_evento);
+  const limiteFmt = formatarData(ev.data_limite_recebimento); // <- usa data_limite
+
+  const blocoInicio = `
+    <div>
+      <div class="label">Início</div>
+      <div class="value">${iniFmt ?? "-"}</div>
+    </div>`;
+
+  const blocoLimite = limiteFmt ? `
+    <div>
+      <div class="label">Data limite</div>
+      <div class="value">${limiteFmt}</div>
+    </div>` : "";
 
   return `
     <article class="card">
@@ -48,18 +53,12 @@ function cardEvento(ev){
       <div class="card-body">
         <div class="card-title">
           <h3>${ev.nome_evento ?? "-"}</h3>
-          <span class="${badgeClasse(status)}">${rotuloStatus(status)}</span>
+          <span class="${badgeClasse(status)}">${status || "-"}</span>
         </div>
         <p>${ev.descricao ?? ""}</p>
         <div class="meta">
-          <div>
-            <div class="label">Início</div>
-            <div class="value">${formatarData(ev.data_evento)}</div>
-          </div>
-          <div>
-            <div class="label">Fim</div>
-            <div class="value">${formatarData(ev.data_fim)}</div>
-          </div>
+          ${blocoInicio}
+          ${blocoLimite}
         </div>
         <div class="local"><strong>Local:</strong> ${ev.local_evento ?? "-"}</div>
       </div>
@@ -73,7 +72,7 @@ async function obterEventos(statusFiltro=""){
   if(!r.ok) throw new Error(`HTTP ${r.status}`);
   const json = await r.json();
   if(!json?.sucesso || !Array.isArray(json.eventos)) throw new Error("Resposta inválida da API");
-  // segurança extra no client: não renderiza cartões vazios
+  // segurança extra: não renderiza cartões totalmente vazios
   return json.eventos.filter(ev => (ev.nome_evento && ev.nome_evento.trim()) || ev.data_evento);
 }
 
@@ -101,3 +100,4 @@ document.addEventListener("DOMContentLoaded", ()=>{
   carregarEventos("");
   seletor?.addEventListener("change", ()=> carregarEventos(seletor.value));
 });
+
