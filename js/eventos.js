@@ -1,8 +1,10 @@
 // /js/eventos.js — consome a API do Vercel: /api/eventos
 console.log("[eventos] carregado");
 
-// Usa a própria origem do deploy (ex.: https://varaldossonhos-eventos.vercel.app)
-const API_URL = `${location.origin}/api/eventos`;
+// Em produção (Vercel) a API está na mesma origem: /api/eventos
+// Se você abrir o HTML em file:// durante testes, não vai funcionar.
+// Teste pelo Vercel (Preview/Production) ou por um servidor estático simples.
+const API_URL = "/api/eventos";
 
 function $(id){ return document.getElementById(id); }
 
@@ -17,27 +19,36 @@ function badgeClasse(status){
   if(!status) return "badge";
   const s = status.toLowerCase();
   if(s === "em andamento") return "badge andamento";
-  if(s === "em breve" || s === "proximo") return "badge proximo";
-  if(s === "encerrado") return "badge encerrado";
+  if(s === "proximo")       return "badge proximo";
+  if(s === "encerrado")     return "badge encerrado";
   return "badge";
 }
 
+function rotuloStatus(status){
+  if(!status) return "-";
+  const s = status.toLowerCase();
+  if(s === "proximo") return "próximo"; // exibe com acento
+  return status; // "em andamento", "encerrado"
+}
+
 function primeiraImagem(ev){
+  // servidor devolve "imagem" (array de anexos do Airtable)
   return (ev.imagem && ev.imagem[0] && ev.imagem[0].url)
     ? ev.imagem[0].url
-    : "/imagens/placeholder-evento.jpg"; // usar caminho absoluto
+    : "../imagens/placeholder-evento.jpg";
 }
 
 function cardEvento(ev){
   const img = primeiraImagem(ev);
   const status = ev.status_evento;
+
   return `
     <article class="card">
       <img class="card-img" src="${img}" alt="${ev.nome_evento ?? "-"}" loading="lazy">
       <div class="card-body">
         <div class="card-title">
           <h3>${ev.nome_evento ?? "-"}</h3>
-          <span class="${badgeClasse(status)}">${status ?? "-"}</span>
+          <span class="${badgeClasse(status)}">${rotuloStatus(status)}</span>
         </div>
         <p>${ev.descricao ?? ""}</p>
         <div class="meta">
@@ -57,30 +68,11 @@ function cardEvento(ev){
 }
 
 async function obterEventos(statusFiltro=""){
-  const url = new URL(API_URL);
-  if (statusFiltro) url.searchParams.set("status", statusFiltro);
-  url.searchParams.set("_t", Date.now()); // cache-buster
-
-  const r = await fetch(url.toString(), { headers: { "accept": "application/json" } });
+  const url = statusFiltro ? `${API_URL}?status=${encodeURIComponent(statusFiltro)}` : API_URL;
+  const r = await fetch(url);
   if(!r.ok) throw new Error(`HTTP ${r.status}`);
-
-  // pode acontecer de vir HTML em vez de JSON; vamos checar content-type
-  const ct = r.headers.get("content-type") || "";
-  if (!ct.includes("application/json")) {
-    const txt = await r.text();
-    console.error("[eventos] Resposta não-JSON:", txt.slice(0, 500));
-    throw new Error("A API não retornou JSON.");
-  }
-
   const json = await r.json();
-  console.log("[eventos] JSON recebido:", json);
-
-  if (!json || json.sucesso !== true || !Array.isArray(json.eventos)) {
-    const msg = json?.mensagem || "Resposta inválida da API";
-    const det = json?.detalhe ? ` — ${json.detalhe}` : "";
-    throw new Error(msg + det);
-  }
-
+  if(!json?.sucesso || !Array.isArray(json.eventos)) throw new Error("Resposta inválida da API");
   // segurança extra no client: não renderiza cartões vazios
   return json.eventos.filter(ev => (ev.nome_evento && ev.nome_evento.trim()) || ev.data_evento);
 }
@@ -90,8 +82,6 @@ async function carregarEventos(statusFiltro=""){
   const estado = $("estado-lista");
   grid.innerHTML = "";
   estado.textContent = "Carregando eventos…";
-  estado.setAttribute("aria-busy", "true");
-
   try{
     const eventos = await obterEventos(statusFiltro);
     if(!eventos.length){
@@ -102,9 +92,7 @@ async function carregarEventos(statusFiltro=""){
     grid.innerHTML = eventos.map(cardEvento).join("");
   }catch(e){
     console.error("[eventos] erro:", e);
-    estado.textContent = `Erro ao carregar eventos. ${e.message ?? ""}`;
-  }finally{
-    estado.setAttribute("aria-busy", "false");
+    estado.textContent = "Erro ao carregar eventos.";
   }
 }
 
@@ -113,6 +101,3 @@ document.addEventListener("DOMContentLoaded", ()=>{
   carregarEventos("");
   seletor?.addEventListener("change", ()=> carregarEventos(seletor.value));
 });
-
-
-
