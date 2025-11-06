@@ -5,19 +5,19 @@
   "engines": {
     "node": "20.x"
   },
-
   "scripts": {
-    "start": "node api/index.js",
-    "dev": "vercel dev"
-  },
+    "start": "node api/index.js",     
+    "local": "node server.js"         
 
+  },
   "dependencies": {
     "airtable": "^0.12.2",
     "bcryptjs": "^2.4.3",
-    "dotenv": "^16.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
     "emailjs": "^4.0.3",
-    "emailjs-com": "^3.2.0"
+    "emailjs-com": "^3.2.0",
+    "express": "^5.1.0"
   }
-  
 }
 

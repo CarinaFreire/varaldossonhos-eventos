@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agenda de Eventos • Fantástica Fábrica de Sonhos</title>
+
+  <!-- CSS global + página -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/eventos.css">
+
+  <!-- Fallback para quando JS estiver desativado -->
+  <noscript>
+    <style>
+      #eventos-grid { display:none }
+      #estado-lista { color:#b91c1c; font-weight:600 }
+    </style>
+  </noscript>
+</head>
+<body>
+  <!-- Header padrão do site (carregado via JS) -->
+  <div id="header" role="banner"></div>
+
+  <main class="container" role="main">
+    <section class="hero-eventos">
+      <h1>Agenda de Eventos</h1>
+      <p>Acompanhe nossos eventos e ajude a espalhar alegria!</p>
+
+      <!-- Filtro por status -->
+      <div class="filtros">
+        <label for="filtro-status">Filtrar por status:</label>
+        <select id="filtro-status" aria-label="Filtro de status dos eventos">
+          <!-- importante: value="" para buscar todos -->
+          <option value="">Todos</option>
+          <option value="em andamento">Em andamento</option>
+          <option value="em breve">Em breve</option>
+          <option value="encerrado">Encerrado</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Lista de eventos -->
+    <section id="eventos-grid" class="eventos-grid" aria-live="polite" aria-busy="false"></section>
+
+    <!-- Estado / mensagens ao usuário -->
+    <p id="estado-lista" class="estado-lista" role="status"></p>
+  </main>
+
+  <!-- Footer padrão do site (carregado via JS) -->
+  <div id="footer" role="contentinfo"></div>
+
+  <!-- Scripts -->
+  <script defer src="../js/header.js"></script>
+  <script defer src="../js/footer.js"></script>
+  <script defer src="../js/eventos.js"></script>
+</body>
+</html>
+
+
