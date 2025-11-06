@@ -1,10 +1,8 @@
-// /js/eventos.js — consome a API do Vercel: /api/eventos
+// /js/eventos.js — consome a API: /api/eventos_list
 console.log("[eventos] carregado");
 
-// Em produção (Vercel) a API está na mesma origem: /api/eventos
-// Se você abrir o HTML em file:// durante testes, isto não vai funcionar.
-// Teste pelo Vercel (Preview/Production) ou por um servidor estático simples.
-const API_URL = "/api/eventos";
+// Em produção (Vercel) a API está na mesma origem
+const API_URL = "/api/eventos_list";
 
 function $(id){ return document.getElementById(id); }
 
@@ -17,7 +15,7 @@ function formatarData(iso){
 
 function badgeClasse(status){
   if(!status) return "badge";
-  const s = status.toLowerCase();
+  const s = String(status).toLowerCase();
   if(s === "em andamento") return "badge andamento";
   if(s === "em breve" || s === "proximo") return "badge proximo";
   if(s === "encerrado") return "badge encerrado";
@@ -92,4 +90,5 @@ document.addEventListener("DOMContentLoaded", ()=>{
   carregarEventos("");
   seletor?.addEventListener("change", ()=> carregarEventos(seletor.value));
 });
+
 
