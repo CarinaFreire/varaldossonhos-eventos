@@ -86,4 +86,39 @@
   border: 1px solid rgba(15,23,42,.2);
   cursor: pointer;
 }
-.dot.on { background: #0f172a; }
+.dot.on { background: #0f172a; 
+}
+/* ====== Cartinhas / Adoções ====== */
+.adocoes { 
+  display: grid; 
+  gap: 6px; 
+  margin: 2px 0 8px; 
+}
+.adocoes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: .9rem;
+  color: #0f172a;
+}
+.adocoes-numbers {
+  font-weight: 600;
+}
+.progress{
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress .bar{
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+.adocoes-foot{
+  font-size: .86rem;
+  color: #334155;
+}
+.adocoes-foot strong{ color:#0f172a; }
+
