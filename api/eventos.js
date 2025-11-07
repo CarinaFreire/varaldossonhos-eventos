@@ -1,83 +1,97 @@
-// ============================================================
-// 💙 VARAL DOS SONHOS — /api/eventos.js (datas sem fuso)
-// Usa: data_evento (início) e data_limite_recebimento (data limite)
-// ============================================================
+// /api/eventos.js
 import Airtable from "airtable";
+
 export const config = { runtime: "nodejs" };
 
-// Garante 'YYYY-MM-DD' ou null
-function normalizeDateStr(v) {
-  if (!v) return null;
-  if (typeof v === "string") {
-    const s = v.includes("T") ? v.split("T")[0] : v;
-    return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
-  }
-  if (v instanceof Date && !isNaN(v)) {
-    const y = v.getUTCFullYear();
-    const m = String(v.getUTCMonth() + 1).padStart(2, "0");
-    const d = String(v.getUTCDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
-  return null;
+const ok = (res, data) => res.status(200).json(data);
+const err = (res, code, msg, detalhe) =>
+  res.status(code).json({ sucesso: false, mensagem: msg, detalhe });
+
+function getAirtable() {
+  const apiKey = process.env.AIRTABLE_API_KEY;
+  const baseId = process.env.AIRTABLE_BASE_ID;
+  const table = process.env.AIRTABLE_EVENTOS_TABLE || "eventos";
+  if (!apiKey || !baseId) throw new Error("Credenciais Airtable ausentes.");
+  const base = new Airtable({ apiKey }).base(baseId);
+  return { base, table };
+}
+
+// helpers para normalizar contadores vindos como número, texto, lookup, etc.
+function toIntSafe(v) {
+  if (v == null) return 0;
+  if (Array.isArray(v)) return v.length;
+  const n = parseInt(`${v}`.trim(), 10);
+  return Number.isFinite(n) ? n : 0;
+}
+function pick(...vals) {
+  for (const v of vals) if (v !== undefined) return v;
+  return undefined;
+}
+
+function mapEvento(rec) {
+  const f = rec.fields || {};
+
+  // imagem (pega array de anexos do campo "imagem")
+  const imagem = Array.isArray(f.imagem)
+    ? f.imagem.map(x => ({
+        url: x.url,
+        filename: x.filename,
+        width: x.width,
+        height: x.height,
+      }))
+    : [];
+
+  // status: aceita suas 3 opções
+  const statusRaw = (f.status_evento || "").toString().toLowerCase(); // "em andamento" | "proximo" | "encerrado"
+
+  // normalização de contadores
+  const cartinhas_total = toIntSafe(
+    pick(f.cartinhas_total, f.cartinha, f.cartinhas, f.qtd_cartinhas, f.qtd_cartinha)
+  );
+  const adocoes_total = toIntSafe(
+    pick(f.adocoes_total, f.adocoes, f.adoções, f.qtd_adocoes, f.qtd_adoções)
+  );
+
+  return {
+    id: rec.id,
+    id_evento: f.id_evento ?? null,
+    nome_evento: f.nome_evento ?? "",
+    local_evento: f.local_evento ?? "",
+    descricao: f.descricao ?? "",
+    data_evento: f.data_evento ?? null,
+    data_limite_recebimento: f.data_limite_recebimento ?? null,
+    status_evento: statusRaw,
+    imagem,
+    destacar_na_homepage: !!f.destacar_na_homepage,
+
+    // >>> NOVOS CAMPOS normalizados
+    cartinhas_total,
+    adocoes_total,
+  };
 }
 
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(204).end();
-
   try {
-    const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY })
-      .base(process.env.AIRTABLE_BASE_ID);
-    const table = process.env.AIRTABLE_EVENTOS_TABLE || "eventos";
+    const { base, table } = getAirtable();
 
-    // Filtros opcionais
-    const { status, destacados } = req.query;
-    const filtros = [];
-    if (typeof status === "string" && status.trim()) {
-      // status_evento: 'em andamento' | 'encerrado' | 'proximo'
-      filtros.push(`{status_evento}='${status.trim()}'`);
-    }
-    if (destacados === "true") {
-      filtros.push("{destacar_na_homepage}=1");
-    }
+    // filtro por status opcional: ?status=em%20andamento|proximo|encerrado
+    const statusFiltro = (req.query.status || "").toString().toLowerCase().trim();
+    const allowed = ["em andamento", "proximo", "encerrado"];
+    const useFilter = allowed.includes(statusFiltro);
 
-    const selectParams = {
-      sort: [{ field: "data_evento", direction: "asc" }],
-    };
-    if (filtros.length) {
-      selectParams.filterByFormula = `AND(${filtros.join(",")})`;
-    }
+    const params = useFilter
+      ? {
+          filterByFormula: `{status_evento} = '${statusFiltro}'`,
+          pageSize: 50,
+        }
+      : { pageSize: 50 };
 
-    const records = await base(table).select(selectParams).all();
+    const registros = await base(table).select(params).all();
+    const eventos = registros.map(mapEvento);
 
-    const eventos = records.map((r) => {
-      const f = r.fields || {};
-      return {
-        airtable_id: r.id,
-        id_evento: f.id_evento ?? null,
-        nome_evento: f.nome_evento ?? "",
-        descricao: f.descricao ?? "",
-        status_evento: f.status_evento ?? "",             // 'em andamento' | 'encerrado' | 'proximo'
-        local_evento: f.local_evento ?? f.escola_local ?? "",
-        endereco: f.endereco ?? "",
-        data_evento: normalizeDateStr(f.data_evento),     // início (YYYY-MM-DD)
-        data_limite_recebimento: normalizeDateStr(f.data_limite_recebimento), // data limite (YYYY-MM-DD)
-        imagem: Array.isArray(f.imagem) ? f.imagem : [],
-        destacar_na_homepage: !!f.destacar_na_homepage,
-      };
-    });
-
-    res.status(200).json({ sucesso: true, eventos });
+    ok(res, { sucesso: true, total: eventos.length, eventos });
   } catch (e) {
     console.error("Erro /api/eventos:", e);
-    res.status(500).json({
-      sucesso: false,
-      mensagem: "Erro ao listar eventos.",
-      detalhe: e?.message || String(e),
-    });
+    err(res, 500, "Erro ao listar eventos.", e?.message || e?.toString());
   }
 }
-
-
