@@ -1,63 +1,110 @@
-// /js/eventos.js — consome a API do Vercel: /api/eventos
-console.log("[eventos] carregado");
+// ================================
+// CONFIG
+// ================================
+const API_URL = "/api/eventos"; // sua rota no Vercel / API interna
+const IMG_PLACEHOLDER = "../imagens/sem-foto.png"; // fallback se evento não tiver imagem
+const AUTOPLAY_MS = 4000; // autoplay do carrossel
 
-const API_URL = "/api/eventos"; // mesma origem (Vercel)
+// ================================
+// ELEMENTOS
+// ================================
+const grid = document.getElementById("eventos-grid");
+const estadoLista = document.getElementById("estado-lista");
+const filtroStatus = document.getElementById("filtro-status");
 
-function $(id){ return document.getElementById(id); }
-
+// ================================
+// FORMATAÇÃO DE DATA (SEM FUSO!)
+// ================================
 function formatarData(iso){
-  if(!iso) return "-";
-  const d = new Date(iso);
-  if(isNaN(d)) return "-";
-  return new Intl.DateTimeFormat("pt-BR",{ day:"2-digit", month:"2-digit", year:"numeric" }).format(d);
+  if (!iso) return "-";
+  const [y,m,d] = iso.split("T")[0].split("-");
+  return `${d}/${m}/${y}`;
 }
 
-function badgeClasse(status){
-  if(!status) return "badge";
-  const s = status.toLowerCase();
-  if(s === "em andamento") return "badge andamento";
-  if(s === "proximo" || s === "em breve") return "badge proximo";
-  if(s === "encerrado") return "badge encerrado";
-  return "badge";
+// ================================
+// BUSCAR EVENTOS
+// ================================
+async function carregarEventos() {
+  estadoLista.textContent = "Carregando eventos...";
+  estadoLista.style.color = "#475569";
+  grid.setAttribute("aria-busy", "true");
+
+  try {
+    const resp = await fetch(API_URL);
+    const json = await resp.json();
+
+    if (!json?.sucesso || !Array.isArray(json.eventos)) {
+      throw new Error("Resposta inválida da API");
+    }
+
+    renderizarEventos(json.eventos);
+  } catch (e) {
+    console.error(e);
+    estadoLista.textContent = "Erro ao carregar eventos.";
+    estadoLista.style.color = "#b91c1c";
+  }
+
+  grid.setAttribute("aria-busy", "false");
 }
 
-function primeiraImagem(ev){
-  const imgs = ev.imagem || ev.imagem_evento || [];
-  return (imgs[0] && imgs[0].url) ? imgs[0].url : "../imagens/placeholder-evento.jpg";
+// ================================
+// RENDERIZAR EVENTOS
+// ================================
+function renderizarEventos(lista) {
+  grid.innerHTML = "";
+
+  const filtro = filtroStatus.value;
+  let filtrados = lista;
+
+  if (filtro) {
+    filtrados = lista.filter(ev => ev.status_evento === filtro);
+  }
+
+  if (filtrados.length === 0) {
+    estadoLista.textContent = "Nenhum evento encontrado.";
+    return;
+  }
+
+  estadoLista.textContent = "";
+
+  filtrados.forEach(evento => {
+    grid.appendChild(criarCard(evento));
+  });
 }
 
-/* === Card com carrossel interno === */
-function cardEvento(ev){
-  const imgs = ev.imagem || ev.imagem_evento || [];
-  const temVarias = Array.isArray(imgs) && imgs.length > 1;
-  const status = ev.status_evento;
+// ================================
+// CRIA O CARD DO EVENTO
+// ================================
+function criarCard(ev) {
+  const imagens = Array.isArray(ev.imagem) && ev.imagem.length > 0
+    ? ev.imagem.map(img => img.url)
+    : [IMG_PLACEHOLDER];
 
-  // Dots (um por imagem)
-  const dots = Array.isArray(imgs)
-    ? imgs.map((_,i)=>`<button class="dot${i===0?" on":""}" data-i="${i}" aria-label="Ir para imagem ${i+1}"></button>`).join("")
-    : "";
+  const card = document.createElement("article");
+  card.className = "card";
+  card.tabIndex = 0;
 
-  // Todas as imagens (exibidas via JS)
-  const imagensHTML = Array.isArray(imgs) && imgs.length
-    ? imgs.map((im, i)=>`<img class="card-img" src="${im.url}" alt="${ev.nome_evento ?? "-"} - imagem ${i+1}">`).join("")
-    : `<img class="card-img" src="${primeiraImagem(ev)}" alt="${ev.nome_evento ?? "-"}">`;
+  const statusClass = ev.status_evento?.replace(" ", "-") || "";
 
-  return `
-  <article class="card">
+  card.innerHTML = `
     <div class="card-media">
-      ${imagensHTML}
-      <button class="img-nav prev${temVarias?"":" hidden"}" aria-label="Imagem anterior">‹</button>
-      <button class="img-nav next${temVarias?"":" hidden"}" aria-label="Próxima imagem">›</button>
-      <div class="dots${temVarias?"":" hidden"}">${dots}</div>
+      ${imagens.map((src,i) =>
+        `<img src="${src}" class="card-img" data-idx="${i}" alt="${ev.nome_evento}">`
+      ).join("")}
+      <button class="img-nav prev" aria-label="Imagem anterior">&#10094;</button>
+      <button class="img-nav next" aria-label="Próxima imagem">&#10095;</button>
+      <div class="dots">
+        ${imagens.map((_,i)=>`<button class="dot" data-idx="${i}"></button>`).join("")}
+      </div>
     </div>
 
     <div class="card-body">
       <div class="card-title">
-        <h3>${ev.nome_evento ?? "-"}</h3>
-        <span class="${badgeClasse(status)}">${status ?? "-"}</span>
+        <h3>${ev.nome_evento}</h3>
+        <span class="badge ${statusClass}">${ev.status_evento}</span>
       </div>
 
-      <p>${ev.descricao ?? ""}</p>
+      <p>${ev.descricao || ""}</p>
 
       <div class="meta">
         <div>
@@ -70,112 +117,63 @@ function cardEvento(ev){
         </div>
       </div>
 
-      <div class="local"><strong>Local:</strong> ${ev.local_evento ?? "-"}</div>
+      <p class="local"><strong>Local:</strong> ${ev.local_evento || "-"}</p>
     </div>
-  </article>
   `;
+
+  iniciarCarrossel(card);
+  return card;
 }
 
-/* === Inicializa carrossel por card === */
-function iniciarCarrossel(cardElem){
-  const imgs = [...cardElem.querySelectorAll('.card-img')];
-  const dots = [...cardElem.querySelectorAll('.dot')];
-  const btnPrev = cardElem.querySelector('.img-nav.prev');
-  const btnNext = cardElem.querySelector('.img-nav.next');
+// ================================
+// CARROSSEL
+// ================================
+function iniciarCarrossel(card) {
+  const imgs = card.querySelectorAll(".card-img");
+  const dots = card.querySelectorAll(".dot");
+  const btnPrev = card.querySelector(".prev");
+  const btnNext = card.querySelector(".next");
 
-  // Se não há imagens, nada a fazer
-  if (!imgs.length) return;
+  let i = 0;
+  let timer;
 
-  // Se só 1 imagem, mostra e encerra (sem controles)
-  if (imgs.length === 1) {
-    imgs[0].style.display = 'block';
-    btnPrev?.classList.add('hidden');
-    btnNext?.classList.add('hidden');
-    cardElem.querySelector('.dots')?.classList.add('hidden');
-    return;
+  function mostrar(n) {
+    i = (n + imgs.length) % imgs.length;
+    imgs.forEach((img,idx)=> img.style.display = (idx===i?"block":"none"));
+    dots.forEach((d,idx)=> d.classList.toggle("on", idx===i));
   }
 
-  let idx = 0;
-  let timer = null;
-  const INTERVALO = 4000;
+  function prox() { mostrar(i+1); }
+  function prev() { mostrar(i-1); }
 
-  function mostrar(i){
-    idx = (i + imgs.length) % imgs.length;
-    imgs.forEach((im, k)=>{ im.style.display = (k===idx) ? 'block':'none'; });
-    dots.forEach((d, k)=>{ d.classList.toggle('on', k===idx); });
-  }
-  function proximo(){ mostrar(idx + 1); }
-  function anterior(){ mostrar(idx - 1); }
-
-  function iniciarAuto(){
-    pararAuto();
-    timer = setInterval(()=>{ proximo(); }, INTERVALO);
-  }
-  function pararAuto(){
-    if (timer) { clearInterval(timer); timer = null; }
-  }
-
-  btnPrev?.addEventListener('click', ()=>{ anterior(); iniciarAuto(); });
-  btnNext?.addEventListener('click', ()=>{ proximo(); iniciarAuto(); });
-  dots.forEach(d=>{
-    d.addEventListener('click', ()=>{
-      const i = Number(d.getAttribute('data-i')||"0");
-      mostrar(i); iniciarAuto();
-    });
+  btnNext.onclick = () => { prox(); resetAuto(); }
+  btnPrev.onclick = () => { prev(); resetAuto(); }
+  dots.forEach(d => d.onclick = () => {
+    mostrar(Number(d.dataset.idx));
+    resetAuto();
   });
 
-  // Pausa no hover
-  cardElem.addEventListener('mouseenter', pararAuto);
-  cardElem.addEventListener('mouseleave', iniciarAuto);
+  function auto() {
+    timer = setInterval(prox, AUTOPLAY_MS);
+  }
+  function resetAuto(){
+    clearInterval(timer);
+    auto();
+  }
 
-  // Pausa quando a aba não está visível
-  document.addEventListener('visibilitychange', ()=>{
-    if (document.hidden) pararAuto(); else iniciarAuto();
-  });
-
-  // Inicializa
   mostrar(0);
-  iniciarAuto();
+  auto();
 }
 
-/* === Consumo da API === */
-async function obterEventos(statusFiltro=""){
-  const url = statusFiltro ? `${API_URL}?status=${encodeURIComponent(statusFiltro)}` : API_URL;
-  const r = await fetch(url);
-  if(!r.ok) throw new Error(`HTTP ${r.status}`);
-  const json = await r.json();
-  if(!json?.sucesso || !Array.isArray(json.eventos)) throw new Error("Resposta inválida da API");
-  // segurança extra no client: não renderiza cartões vazios
-  return json.eventos.filter(ev => (ev.nome_evento && ev.nome_evento.trim()) || ev.data_evento);
-}
+// ================================
+// EVENTOS DO FILTRO
+// ================================
+filtroStatus.addEventListener("change", carregarEventos);
 
-async function carregarEventos(statusFiltro=""){
-  const grid = $("eventos-grid");
-  const estado = $("estado-lista");
-  grid.innerHTML = "";
-  estado.textContent = "Carregando eventos…";
-  try{
-    const eventos = await obterEventos(statusFiltro);
+// ================================
+// INICIAR
+// ================================
+carregarEventos();
 
-    if(!eventos.length){
-      estado.textContent = "Nenhum evento encontrado.";
-      return;
-    }
-    estado.textContent = "";
-    grid.innerHTML = eventos.map(cardEvento).join("");
-
-    // inicializa o carrossel para cada card renderizado
-    [...grid.querySelectorAll('.card')].forEach(card => iniciarCarrossel(card));
-  }catch(e){
-    console.error("[eventos] erro:", e);
-    estado.textContent = "Erro ao carregar eventos.";
-  }
-}
-
-document.addEventListener("DOMContentLoaded", ()=>{
-  const seletor = $("filtro-status");
-  carregarEventos("");
-  seletor?.addEventListener("change", ()=> carregarEventos(seletor.value));
-});
 
 
