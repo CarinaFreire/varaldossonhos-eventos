@@ -247,5 +247,92 @@
 
 .card:focus-visible {
   outline: 2px solid #3b82f6;
-  outline-offset: 4px;
+  outline-offset: 4px; 
+}
+
+/* === Descrição com "Ler mais" === */
+.desc {
+  white-space: pre-line;              /* respeita quebras de linha */
+  color:#475569;
+  font-size:.92rem;
+}
+
+.desc.clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.desc.expanded {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.read-more {
+  background: transparent;
+  border: 0;
+  color: #2563eb;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Espaço pequeno entre descrição e pills */
+.card-body .desc + .pills { margin-top: 2px; }
+
+/* === Lightbox === */
+#lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.85);
+  display: none;          /* será exibido via JS */
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+#lightbox.on { display: flex; }
+
+.lb-img {
+  max-width: 92vw;
+  max-height: 86vh;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  border-radius: 12px;
+}
+
+.lb-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  font-size: 28px;
+  line-height: 1;
+  width: 42px; height: 42px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(255,255,255,.92);
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.lb-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px; height: 46px;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(255,255,255,.92);
+  color:#0f172a;
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.lb-prev { left: 22px; }
+.lb-next { right: 22px; }
+
+@media (hover: hover) {
+  .lb-close:hover, .lb-nav:hover {
+    background: #fff;
+  }
 }
