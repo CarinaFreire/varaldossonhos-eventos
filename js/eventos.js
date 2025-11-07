@@ -63,7 +63,7 @@ function sortEventos(evts) {
     const sa = STATUS_ORDER[a.status_evento] ?? 99;
     const sb = STATUS_ORDER[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
-    // dentro do mesmo status, ordenar por data_evento ascendente
+    // dentro do mesmo status, ordenar por data_evento ascendente (sem Date())
     return cmpYMD(a.data_evento, b.data_evento);
   });
 }
@@ -80,20 +80,27 @@ function pillStatus(status) {
   return `<span class="${classes.join(" ")}">${text}</span>`;
 }
 
-// Monta o HTML do card de um evento
+function escapeHtml(s) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// Monta o HTML do card de um evento (layout igual ao seu)
 function cardEvento(ev) {
-  // imagens
   const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
   const primeira = imgs[0]?.url || "";
 
-  // descrição (truncável)
+  // descrição (mantém quebras de linha; ler mais continua igual)
   const desc = (ev.descricao || "").trim();
 
   return `
   <article class="card" tabindex="0">
     <div class="card-media" ${primeira ? `data-has-img="1"` : ""}>
       ${primeira ? `<img class="card-img" src="${primeira}" alt="${ev.nome_evento}" loading="lazy" />` : ""}
-      <!-- botões do carrossel permanecem, caso tenha múltiplas imagens -->
+
       ${imgs.length > 1 ? `
         <button class="img-nav prev" aria-label="Imagem anterior">‹</button>
         <button class="img-nav next" aria-label="Próxima imagem">›</button>
@@ -131,19 +138,11 @@ function cardEvento(ev) {
   `;
 }
 
-function escapeHtml(s) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
 function renderEventos(lista) {
   $grid.innerHTML = lista.map(cardEvento).join("");
   $estado.textContent = lista.length ? "" : "Nenhum evento encontrado.";
 
-  // ligar interações extras que você já usa (carrossel, lightbox, ver mais)
+  // liga as interações que você já tinha
   wireLeiaMais();
   wireLightbox();
   wireCarrossel();
@@ -162,14 +161,15 @@ function wireLeiaMais() {
 }
 
 function showLongText(texto) {
-  // simples modal de texto (você pode já ter um)
+  // abre em janela simples (mantém o que você já tinha)
   const win = window.open("", "_blank", "width=600,height=600");
-  win.document.write(`<pre style="white-space:pre-wrap; font-family:inherit; padding:16px;">${escapeHtml(texto)}</pre>`);
+  win.document.write(
+    `<pre style="white-space:pre-wrap; font-family:inherit; padding:16px;">${escapeHtml(texto)}</pre>`
+  );
   win.document.close();
 }
 
 function wireLightbox() {
-  // se você já tem um lightbox no HTML, conecte aqui
   $grid.querySelectorAll(".card-media img").forEach(img => {
     img.addEventListener("click", () => {
       const src = img.getAttribute("src");
@@ -179,7 +179,6 @@ function wireLightbox() {
 }
 
 function openLightbox(urls, index) {
-  // implementação simplificada (caso já tenha outro, ignora)
   const lb = document.getElementById("lightbox");
   if (!lb) return;
   const $img = lb.querySelector(".lb-img");
@@ -187,9 +186,7 @@ function openLightbox(urls, index) {
   const $next = lb.querySelector(".lb-next");
   let i = index;
 
-  function show() {
-    $img.src = urls[i];
-  }
+  function show() { $img.src = urls[i]; }
   function prev() { i = (i - 1 + urls.length) % urls.length; show(); }
   function next() { i = (i + 1) % urls.length; show(); }
 
@@ -208,8 +205,7 @@ function openLightbox(urls, index) {
 }
 
 function wireCarrossel() {
-  // caso tenha múltiplas imagens por card, implemente aqui como já estava
-  // (deixei como placeholder para não alongar)
+  // placeholder: mantenha sua lógica anterior se você já tinha
 }
 
 /* -------- Boot -------- */
@@ -223,6 +219,7 @@ async function boot() {
 
 $status.addEventListener("change", boot);
 document.addEventListener("DOMContentLoaded", boot);
+
 
 
 
