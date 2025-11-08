@@ -74,22 +74,38 @@
 .clean-meta { display:grid; gap:10px; }
 
 .big-chip{
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:6px; background:#f8fafc; border:1px solid #dbeafe; color:#0f172a;
-  padding:10px 12px; border-radius:12px; font-size:.9rem;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  background:#f8fafc;
+  border:1px solid #dbeafe;
+  color:#0f172a;
+  padding:8px 10px;        /* antes: 10px 12px */
+  border-radius:10px;      /* antes: 12px */
+  font-size:.85rem;        /* um pouco menor */
+  max-width: 260px;        /* limite de largura */
+  margin: 0 auto;          /* centraliza */
 }
 
 .chip-title-row{
-  display:inline-flex; align-items:center; gap:8px;
-  font-weight:700; color:#0f172a;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;                 /* antes era 8px */
+  font-weight:700;
+  font-size:.88rem;        /* um pouco menor */
 }
 
 .chip-subrow{
-  display:flex; align-items:center; gap:10px;
-  flex-wrap:wrap; color:#0f172a; font-size:.88rem;
+  display:flex;
+  align-items:center;
+  gap:6px;                 /* antes era 10px */
+  flex-wrap:wrap;
+  font-size:.82rem;        /* mais compacto */
 }
 
-.chip-bar{ color:#94a3b8; }          /* “|” com cor suave */
+.chip-bar{ color:#94a3b8; }
 .chip-subrow b{ color:#64748b; font-weight:600; }
 
 /* Local */
