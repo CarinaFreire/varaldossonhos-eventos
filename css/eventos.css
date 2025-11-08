@@ -8,7 +8,7 @@
 /* ===== Grid de cards — MAIS RESPIRO ===== */
 .eventos-grid {
   display: grid;
-  gap: 28px;
+  gap: 28px;                        /* + espaço entre cartões */
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 @media (min-width: 720px){ .eventos-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -65,32 +65,24 @@
 }
 .dot.on { background: #0f172a; }
 
-/* conteúdo do card */
+/* conteúdo do card — MAIS RESPIRO */
 .card-body { padding: 16px 16px 18px; display: grid; gap: 10px; }
 .card-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .card-title h3 { margin:0; font-size: 1.05rem; color:#0f172a; }
 
-/* ===== badges de status — “ícone + bolha colorida” ===== */
-.badge{
-  display:inline-flex; align-items:center; gap:8px;
-  padding: 4px 10px; border-radius: 999px;
-  font-size:.75rem; font-weight:700; letter-spacing:.1px;
+/* ===== BADGES de status – FUNDO COLORIDO + EMOJI + TEXTO ===== */
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
 }
-.badge .b-dot{
-  width:8px; height:8px; border-radius:999px; flex:0 0 8px;
-}
-.badge .b-ic{ font-size:.9rem; line-height:1; }
-.badge .b-txt{ line-height:1; }
-
-/* cores (fundo suave + dot forte) */
-.badge.andamento{ background:#dcfce7; color:#166534; }
-.badge.andamento .b-dot{ background:#16a34a; }
-
-.badge.proximo{ background:#fef3c7; color:#92400e; }
-.badge.proximo .b-dot{ background:#f59e0b; }
-
-.badge.encerrado{ background:#e5e7eb; color:#374151; }
-.badge.encerrado .b-dot{ background:#6b7280; }
+.badge.andamento { background: #dcfce7; color:#166534; border-color:#bbf7d0; } /* ⏳ em andamento */
+.badge.proximo   { background: #fef3c7; color:#92400e; border-color:#fde68a; } /* 📅 próximo */
+.badge.encerrado { background: #e5e7eb; color:#374151; border-color:#d1d5db; } /* 🔒 encerrado */
 
 /* descrição truncada com botão ler mais */
 .desc { color:#334155; line-height: 1.45; white-space: pre-wrap; }
@@ -105,7 +97,7 @@
 .desc.expanded { -webkit-line-clamp: initial; overflow: visible; }
 .desc.expanded + .read-more { color:#1e40af; }
 
-/* ===== PILLS (Cartinhas / Adoções) ===== */
+/* ===== PILLS (Cartinhas / Adoções) — NEUTRO, SEM ROXO ===== */
 .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 4px; }
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
@@ -113,11 +105,12 @@
   padding: 4px 8px; border-radius: 999px; font-size: .78rem; font-weight: 600;
 }
 .pill b { color:#0f172a; font-weight: 700; }
+.pill button { color: inherit; }          /* se virar botão clicável depois */
 
 /* ===== Bloco de datas ===== */
 .meta {
   display: grid; gap: 10px;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);   /* 3 colunas: início, limite, realização */
 }
 @media (max-width: 860px){ .meta { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 540px){ .meta { grid-template-columns: 1fr; } }
@@ -131,7 +124,7 @@
 /* estado / mensagens */
 .estado-lista { margin: 8px 0; color:#475569; }
 
-/* lightbox */
+/* lightbox (se estiver usando) */
 #lightbox {
   position: fixed; inset:0; background: rgba(0,0,0,.65);
   display: none; align-items: center; justify-content: center; z-index: 50;
@@ -148,3 +141,4 @@
 }
 #lightbox .lb-prev { left: 24px; }
 #lightbox .lb-next { right: 24px; }
+

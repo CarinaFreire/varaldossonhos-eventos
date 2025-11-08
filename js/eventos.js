@@ -4,13 +4,16 @@ const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-// — mantém a correção de datas sem -1 dia quando vier 'YYYY-MM-DD'
+/* Emojis por status */
+const STATUS_EMOJI = {
+  'em andamento': '⏳',
+  'proximo': '📅',
+  'encerrado': '🔒',
+};
+
 function formatDate(d) {
   if (!d) return '-';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
-    const [y, m, dd] = d.split('-');
-    return `${dd}/${m}/${y}`;
-  }
+  // força timezone local (sem -1 dia)
   const date = new Date(d);
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -30,7 +33,9 @@ function sortEventos(evts) {
   });
 }
 
-/* ============= Lightbox (preguiçoso) ============= */
+/* =======================
+   Lightbox (montagem preguiçosa)
+   ======================= */
 const lightbox = (() => {
   let box, imgEl, prevBtn, nextBtn, closeBtn;
   let imgs = [], idx = 0;
@@ -39,7 +44,7 @@ const lightbox = (() => {
   function mount() {
     if (mounted) return true;
     box = document.getElementById('lightbox');
-    if (!box) return false;
+    if (!box) return false; // HTML do lightbox não presente
 
     imgEl   = box.querySelector('.lb-img');
     prevBtn = box.querySelector('.lb-prev');
@@ -65,6 +70,7 @@ const lightbox = (() => {
     nextBtn.addEventListener('click', next);
     closeBtn.addEventListener('click', close);
 
+    // expõe funções internas para open()
     lightbox._show = show;
     lightbox._onKey = onKey;
 
@@ -74,7 +80,7 @@ const lightbox = (() => {
 
   return {
     open(list, start = 0) {
-      if (!mount()) return;
+      if (!mount()) return; // se não existir #lightbox no HTML, não faz nada
       imgs = list; idx = start;
       this._show();
       box.classList.add('on');
@@ -84,7 +90,9 @@ const lightbox = (() => {
   };
 })();
 
-/* ============= “Ler mais / Ler menos” ============= */
+/* =======================
+   “Ler mais / Ler menos”
+   ======================= */
 function applyReadMore(descEl) {
   const needs = descEl.scrollHeight > descEl.clientHeight + 2;
   if (!needs) return;
@@ -100,26 +108,9 @@ function applyReadMore(descEl) {
   descEl.after(btn);
 }
 
-/* ===== helper para montar o BADGE de status ===== */
-function renderStatusBadge(statusRaw = '') {
-  const s = statusRaw.toLowerCase();
-  const map = {
-    'em andamento': { cls: 'andamento', icon: '⏳', label: 'em andamento' },
-    'proximo':       { cls: 'proximo',   icon: '📅', label: 'próximo' },
-    'encerrado':     { cls: 'encerrado', icon: '✔️', label: 'encerrado' },
-  };
-  const cfg = map[s];
-  if (!cfg) return '';
-  return `
-    <span class="badge ${cfg.cls}">
-      <span class="b-dot" aria-hidden="true"></span>
-      <span class="b-ic" aria-hidden="true">${cfg.icon}</span>
-      <span class="b-txt">${cfg.label}</span>
-    </span>
-  `;
-}
-
-/* ============= Carregamento / render ============= */
+/* =======================
+   Carregamento / render
+   ======================= */
 async function carregarEventos(status = '') {
   const estadoLista = document.getElementById('estado-lista');
   const grid = document.getElementById('eventos-grid');
@@ -166,7 +157,7 @@ function criarCard(ev) {
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
-  /* ----- header (carrossel/única) ----- */
+  // HEADER (carrossel simples / ou imagem única)
   const media = document.createElement('div');
   media.className = 'card-media';
 
@@ -234,15 +225,23 @@ function criarCard(ev) {
     media.appendChild(img);
   }
 
-  /* ----- body ----- */
+  // BODY
   const body = document.createElement('div');
   body.className = 'card-body';
+
+  /* ===== BADGE com emoji + texto ===== */
+  const st = (ev.status_evento || '').toLowerCase();
+  const stClass = st.includes('andamento') ? 'andamento' : st; // normaliza classe
+  const emoji = STATUS_EMOJI[st] || '';
+  const badgeHtml = st
+    ? `<span class="badge ${stClass}" aria-label="Status: ${st}">${emoji} <span>${st}</span></span>`
+    : '';
 
   const title = document.createElement('div');
   title.className = 'card-title';
   title.innerHTML = `
     <h3>${ev.nome_evento || ''}</h3>
-    ${ev.status_evento ? renderStatusBadge(ev.status_evento) : ''}
+    ${badgeHtml}
   `;
 
   const desc = document.createElement('p');
@@ -268,15 +267,15 @@ function criarCard(ev) {
   meta.className = 'meta';
   meta.innerHTML = `
     <div>
-      <div class="label">${labelInicio}</div>
+      <div class="label">Início das adoções</div>
       <div class="value">${formatDate(ev.data_evento)}</div>
     </div>
     <div>
-      <div class="label">${labelLimite}</div>
+      <div class="label">Data limite</div>
       <div class="value">${formatDate(ev.data_limite_recebimento)}</div>
     </div>
     <div>
-      <div class="label">${labelRealizacao}</div>
+      <div class="label">Data do evento</div>
       <div class="value">${formatDate(ev.data_realizacao_evento)}</div>
     </div>
   `;
@@ -303,8 +302,9 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   carregarEventos(v);
 });
 
-/* Boot */
+/* Boot depois que o DOM existir (inclui #lightbox) */
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
+
 
