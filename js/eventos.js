@@ -165,36 +165,39 @@ function criarCard(ev){
   pillCart.className='pill'+(disponiveis>0 && ev.status_evento!=='encerrado' ? ' clickable':' disabled');
   pillCart.innerHTML=`💌 <span class="k">Cartinhas:</span> <span class="v">${totalCart}</span> <span class="k">( ${disponiveis} disp.)</span>`;
 
-/* >>> click “Cartinhas”: abre somente as cartinhas do evento */
-if (disponiveis > 0 && ev.status_evento !== 'encerrado') {
-  pillCart.addEventListener('click', async () => {
+const VARAL_URL = 'https://varaldossonnhos2-0.vercel.app/pages/cartinha.html';
 
-    // 1️⃣ Pega os IDs vinculados no campo "cartinha"
-    const linked = Array.isArray(ev.cartinha) ? ev.cartinha.map(String) : [];
+/* Helper: pega os IDs vinculados, qualquer que seja o nome do campo */
+function getLinkedCartinhaIds(ev) {
+  for (const key of ['cartinha', 'cartinhas', 'cartinha_ids', 'cartinhas_ids']) {
+    const v = ev?.[key];
+    if (Array.isArray(v) && v.length) return v.map(String);
+  }
+  return [];
+}
 
-    // 2️⃣ Se não houver vínculo, abre o Varal completo como fallback
-    if (!linked.length) {
-      window.open(VARAL_URL, '_blank', 'noopener');
+/* >>> click “Cartinhas”: abre SOMENTE as cartinhas do evento (se houver IDs) */
+const statusLower = String(ev.status_evento || '').toLowerCase();
+if (disponiveis > 0 && statusLower !== 'encerrado') {
+
+  // garanta que este chip tenha um visual de botão e cursor de click
+  pillCart.classList.add('pill-cartinhas'); // mantém seu estilo azul chamativo
+
+  pillCart.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    // 1) coleta os ids linkados
+    const linked = getLinkedCartinhaIds(ev);
+
+    // 2) se tiver ids, abre o varal com a query ?ids=...
+    if (linked.length) {
+      const url = `${VARAL_URL}?ids=${encodeURIComponent(linked.join(','))}`;
+      window.open(url, '_blank', 'noopener');
       return;
     }
 
-    // 3️⃣ Busca cartinhas da API filtrando SOMENTE as do evento
-    try {
-      const r = await fetch(`/api/cartinha.js?status=disponível`);
-      const j = await r.json();
-      const todas = j.cartinha || [];
-
-      const set = new Set(linked);
-      const filtradas = todas.filter(c => set.has(String(c.id)));
-
-      // 4️⃣ Abre o Varal só com as cartinhas filtradas
-      const url = VARAL_URL + `?ids=${linked.join(',')}`;
-      window.open(url, '_blank', 'noopener');
-
-    } catch(e) {
-      console.error(e);
-      window.open(VARAL_URL, '_blank', 'noopener');
-    }
+    // 3) se não tiver ids, abre o varal geral (fallback)
+    window.open(VARAL_URL, '_blank', 'noopener');
   });
 }
 
