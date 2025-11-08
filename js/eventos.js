@@ -168,12 +168,12 @@ function criarCard(ev){
 /* >>> click “Cartinhas”: tenta abrir link oficial; se não houver, usa fallback */
 if (disponiveis > 0 && ev.status_evento !== 'encerrado') {
   pillCart.addEventListener('click', () => {
-    const url = 'https://varaldossonnhos2-0.vercel.app/'
+    const url =
       ev.cartinhas_url ||
       ev.cartinhas_view_url ||
       ev.link_cartinhas ||
       ev.url_cartinhas ||
-      VARAL_URL; // ✅ agora abre o Varal correto
+      'https://varaldossonnhos2-0.vercel.app/';
 
     window.open(url, '_blank', 'noopener');
   });
