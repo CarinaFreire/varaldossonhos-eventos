@@ -4,16 +4,9 @@ const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-/* Emojis por status */
-const STATUS_EMOJI = {
-  'em andamento': '⏳',
-  'proximo': '📅',
-  'encerrado': '🔒',
-};
-
 function formatDate(d) {
   if (!d) return '-';
-  // força timezone local (sem -1 dia)
+  // força timezone local
   const date = new Date(d);
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -26,26 +19,21 @@ function sortEventos(evts) {
     const sa = statusOrder[a.status_evento] ?? 99;
     const sb = statusOrder[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
-
     const da = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
     const db = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
     return da - db;
   });
 }
 
-/* =======================
-   Lightbox (montagem preguiçosa)
-   ======================= */
+/* ===== Lightbox (preguiçosa) ===== */
 const lightbox = (() => {
   let box, imgEl, prevBtn, nextBtn, closeBtn;
-  let imgs = [], idx = 0;
-  let mounted = false;
+  let imgs = [], idx = 0, mounted = false;
 
   function mount() {
     if (mounted) return true;
     box = document.getElementById('lightbox');
-    if (!box) return false; // HTML do lightbox não presente
-
+    if (!box) return false;
     imgEl   = box.querySelector('.lb-img');
     prevBtn = box.querySelector('.lb-prev');
     nextBtn = box.querySelector('.lb-next');
@@ -70,17 +58,14 @@ const lightbox = (() => {
     nextBtn.addEventListener('click', next);
     closeBtn.addEventListener('click', close);
 
-    // expõe funções internas para open()
     lightbox._show = show;
     lightbox._onKey = onKey;
-
-    mounted = true;
-    return true;
+    mounted = true; return true;
   }
 
   return {
     open(list, start = 0) {
-      if (!mount()) return; // se não existir #lightbox no HTML, não faz nada
+      if (!mount()) return;
       imgs = list; idx = start;
       this._show();
       box.classList.add('on');
@@ -90,13 +75,10 @@ const lightbox = (() => {
   };
 })();
 
-/* =======================
-   “Ler mais / Ler menos”
-   ======================= */
+/* ===== Ler mais / Ler menos ===== */
 function applyReadMore(descEl) {
   const needs = descEl.scrollHeight > descEl.clientHeight + 2;
   if (!needs) return;
-
   const btn = document.createElement('button');
   btn.className = 'read-more';
   btn.type = 'button';
@@ -108,9 +90,7 @@ function applyReadMore(descEl) {
   descEl.after(btn);
 }
 
-/* =======================
-   Carregamento / render
-   ======================= */
+/* ===== Carregar / renderizar ===== */
 async function carregarEventos(status = '') {
   const estadoLista = document.getElementById('estado-lista');
   const grid = document.getElementById('eventos-grid');
@@ -132,10 +112,7 @@ async function carregarEventos(status = '') {
       return;
     }
 
-    for (const ev of eventos) {
-      grid.appendChild(criarCard(ev));
-    }
-
+    for (const ev of eventos) grid.appendChild(criarCard(ev));
     estadoLista.textContent = '';
   } catch (e) {
     estadoLista.textContent = 'Erro ao carregar eventos.';
@@ -146,10 +123,6 @@ async function carregarEventos(status = '') {
 }
 
 function criarCard(ev) {
-  const labelInicio = 'Início das adoções';
-  const labelLimite = 'Data limite';
-  const labelRealizacao = 'Data do evento';
-
   const descricao = (ev.descricao || '').trim();
   const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
   const firstImg = imgs[0]?.url || '';
@@ -157,7 +130,7 @@ function criarCard(ev) {
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
-  // HEADER (carrossel simples / ou imagem única)
+  /* HEADER */
   const media = document.createElement('div');
   media.className = 'card-media';
 
@@ -172,8 +145,7 @@ function criarCard(ev) {
       media.appendChild(img);
     });
 
-    const dots = document.createElement('div');
-    dots.className = 'dots';
+    const dots = document.createElement('div'); dots.className = 'dots';
     imgs.forEach((_, i) => {
       const d = document.createElement('button');
       d.className = 'dot' + (i === 0 ? ' on' : '');
@@ -184,30 +156,25 @@ function criarCard(ev) {
     media.appendChild(dots);
 
     const prev = document.createElement('button');
-    prev.className = 'img-nav prev';
-    prev.setAttribute('aria-label', 'Imagem anterior');
-    prev.textContent = '‹';
+    prev.className = 'img-nav prev'; prev.setAttribute('aria-label','Imagem anterior'); prev.textContent = '‹';
     const next = document.createElement('button');
-    next.className = 'img-nav next';
-    next.setAttribute('aria-label', 'Próxima imagem');
-    next.textContent = '›';
-    media.appendChild(prev);
-    media.appendChild(next);
+    next.className = 'img-nav next'; next.setAttribute('aria-label','Próxima imagem'); next.textContent = '›';
+    media.appendChild(prev); media.appendChild(next);
 
     let idx = 0, auto;
-    function show(n) {
+    function show(n){ 
       const imgsEls = media.querySelectorAll('.card-img');
       const dotsEls = media.querySelectorAll('.dot');
-      imgsEls.forEach((el, i) => el.style.display = i === n ? 'block' : 'none');
-      dotsEls.forEach((el, i) => el.classList.toggle('on', i === n));
+      imgsEls.forEach((el,i)=> el.style.display = i===n?'block':'none');
+      dotsEls.forEach((el,i)=> el.classList.toggle('on', i===n));
       idx = n;
     }
-    function setSlide(n) { show(n); restartAuto(); }
-    function prevSlide() { setSlide((idx - 1 + imgs.length) % imgs.length); }
-    function nextSlide() { setSlide((idx + 1) % imgs.length); }
-    function startAuto() { auto = setInterval(nextSlide, 4000); }
-    function stopAuto() { clearInterval(auto); }
-    function restartAuto() { stopAuto(); startAuto(); }
+    function setSlide(n){ show(n); restartAuto(); }
+    function prevSlide(){ setSlide((idx - 1 + imgs.length) % imgs.length); }
+    function nextSlide(){ setSlide((idx + 1) % imgs.length); }
+    function startAuto(){ auto = setInterval(nextSlide, 4000); }
+    function stopAuto(){ clearInterval(auto); }
+    function restartAuto(){ stopAuto(); startAuto(); }
 
     prev.addEventListener('click', prevSlide);
     next.addEventListener('click', nextSlide);
@@ -217,66 +184,59 @@ function criarCard(ev) {
 
   } else if (firstImg) {
     const img = document.createElement('img');
-    img.src = firstImg;
-    img.alt = ev.nome_evento || 'Imagem do evento';
-    img.className = 'card-img';
-    img.style.display = 'block';
-    img.addEventListener('click', () => lightbox.open([{ url: firstImg }], 0));
+    img.src = firstImg; img.alt = ev.nome_evento || 'Imagem do evento';
+    img.className = 'card-img'; img.style.display = 'block';
+    img.addEventListener('click', () => lightbox.open([{ url:firstImg }], 0));
     media.appendChild(img);
   }
 
-  // BODY
-  const body = document.createElement('div');
-  body.className = 'card-body';
-
-  /* ===== BADGE com emoji + texto ===== */
-  const st = (ev.status_evento || '').toLowerCase();
-  const stClass = st.includes('andamento') ? 'andamento' : st; // normaliza classe
-  const emoji = STATUS_EMOJI[st] || '';
-  const badgeHtml = st
-    ? `<span class="badge ${stClass}" aria-label="Status: ${st}">${emoji} <span>${st}</span></span>`
-    : '';
+  /* BODY */
+  const body = document.createElement('div'); body.className = 'card-body';
 
   const title = document.createElement('div');
   title.className = 'card-title';
   title.innerHTML = `
     <h3>${ev.nome_evento || ''}</h3>
-    ${badgeHtml}
+    ${ev.status_evento ? `
+      <span class="badge ${ev.status_evento.includes('andamento') ? 'andamento' : ev.status_evento}">
+        ${ev.status_evento.includes('andamento') ? '⏳' : ev.status_evento === 'proximo' ? '📅' : '🔒'}
+        ${ev.status_evento}
+      </span>` : ''}
   `;
 
   const desc = document.createElement('p');
   desc.className = 'desc clamp-3';
   desc.textContent = descricao;
 
-  const pills = document.createElement('div');
-  pills.className = 'pills';
+  /* Pills (se > 0) */
+  const pills = document.createElement('div'); pills.className = 'pills';
   if ((ev.cartinhas_total || 0) > 0) {
-    const p = document.createElement('span');
-    p.className = 'pill';
+    const p = document.createElement('span'); p.className = 'pill';
     p.innerHTML = `Cartinhas: <b>${ev.cartinhas_total}</b>`;
     pills.appendChild(p);
   }
   if ((ev.adocoes_total || 0) > 0) {
-    const p = document.createElement('span');
-    p.className = 'pill';
+    const p = document.createElement('span'); p.className = 'pill';
     p.innerHTML = `Adoções: <b>${ev.adocoes_total}</b>`;
     pills.appendChild(p);
   }
 
-  const meta = document.createElement('div');
-  meta.className = 'meta';
-  meta.innerHTML = `
-    <div>
-      <div class="label">Início das adoções</div>
-      <div class="value">${formatDate(ev.data_evento)}</div>
+  /* ===== Datas — agrupadas ===== */
+  const dates = document.createElement('div');
+  dates.className = 'dates';
+  dates.innerHTML = `
+    <div class="dates-group">
+      <div class="dates-title">📬 Adoções</div>
+      <div class="chips">
+        <span class="chip"><b>início:</b> ${formatDate(ev.data_evento)}</span>
+        <span class="chip"><b>limite:</b> ${formatDate(ev.data_limite_recebimento)}</span>
+      </div>
     </div>
-    <div>
-      <div class="label">Data limite</div>
-      <div class="value">${formatDate(ev.data_limite_recebimento)}</div>
-    </div>
-    <div>
-      <div class="label">Data do evento</div>
-      <div class="value">${formatDate(ev.data_realizacao_evento)}</div>
+    <div class="dates-group">
+      <div class="dates-title">🎉 Evento</div>
+      <div class="chips">
+        <span class="chip">${formatDate(ev.data_realizacao_evento)}</span>
+      </div>
     </div>
   `;
 
@@ -288,7 +248,7 @@ function criarCard(ev) {
   body.appendChild(desc);
   setTimeout(() => applyReadMore(desc), 0);
   if (pills.childElementCount) body.appendChild(pills);
-  body.appendChild(meta);
+  body.appendChild(dates);
   body.appendChild(local);
 
   wrapper.appendChild(media);
@@ -302,9 +262,10 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   carregarEventos(v);
 });
 
-/* Boot depois que o DOM existir (inclui #lightbox) */
+/* Boot */
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
+
 
 

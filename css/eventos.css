@@ -1,16 +1,11 @@
-/* ============================
-   Agenda de Eventos — Layout
-============================ */
-
+/* ===== Layout base da página ===== */
 .container { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
 .hero-eventos h1 { font-size: 2rem; margin: 0 0 6px; color: #0f172a; }
 .hero-eventos p { color: #475569; margin: 0 0 14px; }
 .filtros { display:flex; align-items:center; gap:8px; margin: 8px 0 20px; }
 .filtros select { padding: 8px 10px; border-radius: 10px; border: 1px solid #cbd5e1; }
 
-/* ======================
-   Grid de cards
-====================== */
+/* ===== Grid de cards ===== */
 .eventos-grid {
   display: grid;
   gap: 28px;
@@ -19,9 +14,7 @@
 @media (min-width: 720px){ .eventos-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1024px){ .eventos-grid { grid-template-columns: repeat(3, 1fr); } }
 
-/* ======================
-   Card
-====================== */
+/* ===== Card ===== */
 .card {
   background: #fff;
   border: 1px solid #e2e8f0;
@@ -30,11 +23,8 @@
   box-shadow: 0 1px 6px rgba(2,6,23,.04);
   transition: box-shadow .2s;
 }
-.card:hover { box-shadow: 0 8px 20px rgba(2,6,23,.1); }
+.card:hover { box-shadow: 0 8px 20px rgba(2,6,23,.10); }
 
-/* ======================
-   Imagem / Carrossel
-====================== */
 .card-media {
   position: relative;
   width: 100%;
@@ -46,8 +36,10 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: none;
+  display: none; /* carrossel liga a visibilidade */
 }
+
+/* setas do carrossel */
 .img-nav {
   position: absolute; top: 50%; transform: translateY(-50%);
   width: 36px; height: 36px; border-radius: 999px;
@@ -60,6 +52,7 @@
 .img-nav.prev { left: 10px; }
 .img-nav.next { right: 10px; }
 
+/* bolinhas carrossel */
 .dots {
   position: absolute; left: 0; right: 0; bottom: 10px;
   display: flex; gap: 6px; justify-content: center;
@@ -72,27 +65,22 @@
 }
 .dot.on { background: #0f172a; }
 
-/* ======================
-   Conteúdo do card
-====================== */
+/* conteúdo do card */
 .card-body { padding: 16px 16px 18px; display: grid; gap: 10px; }
 .card-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.card-title h3 { margin:0; font-size: 1rem; color:#0f172a; }
+.card-title h3 { margin:0; font-size: 1.05rem; color:#0f172a; }
 
-/* ✅ Badges menores + emoji */
+/* ===== badges de status — menores com fundo suave ===== */
 .badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: .68rem;
-  font-weight: 700;
-  border: 1px solid transparent;
+  display:inline-flex; align-items:center; gap:6px;
+  padding: 4px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700;
+  line-height:1; letter-spacing:.2px;
 }
-.badge.andamento { background: #dcfce7; color:#166534; }
-.badge.proximo   { background: #fef3c7; color:#92400e; }
-.badge.encerrado { background: #e5e7eb; color:#374151; }
+.badge.andamento { background: #e7f6ee; color:#166534; } /* ⏳ em andamento */
+.badge.proximo   { background: #fff3db; color:#92400e; } /* 📅 próximo */
+.badge.encerrado { background: #edf1f5; color:#374151; } /* 🔒 encerrado */
 
-/* Descrição c/ ler mais */
+/* descrição + ler mais */
 .desc { color:#334155; line-height: 1.45; white-space: pre-wrap; }
 .clamp-3 {
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
@@ -105,47 +93,64 @@
 .desc.expanded { -webkit-line-clamp: initial; overflow: visible; }
 .desc.expanded + .read-more { color:#1e40af; }
 
-/* ✅ Pills (cartinhas/adoções) */
-.pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px; }
+/* ===== Pills (Cartinhas/Adoções) ===== */
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 4px; }
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
   background: #f8fafc; color:#0f172a; border: 1px solid #e2e8f0;
-  padding: 4px 8px; border-radius: 999px; font-size: .72rem; font-weight: 600;
+  padding: 4px 8px; border-radius: 999px; font-size: .78rem; font-weight: 600;
 }
-.pill b { font-weight: 700; }
+.pill b { color:#0f172a; font-weight: 700; }
 
-/* ✅ Datas compactas com borda azul clara */
-.meta {
-  display: grid; gap: 6px;
-  grid-template-columns: repeat(3, 1fr);
+/* ===== DATAS — agrupadas e clean ===== */
+.dates {
+  display: grid;
+  gap: 8px;
 }
-@media (max-width: 860px){ .meta { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 540px){ .meta { grid-template-columns: 1fr; } }
-.meta > div {
-  background:#f8fafc;
-  border-radius: 10px;
-  padding: 6px 8px;
-  border:1px solid #dbeafe;
+@media (min-width: 420px){
+  .dates { grid-template-columns: 1fr 1fr; align-items: start; }
 }
-.meta .label {
-  color:#64748b;
-  font-size:.72rem;
-  font-weight:500;
+@media (min-width: 860px){
+  .dates { grid-template-columns: 1.1fr .9fr; }
 }
-.meta .value {
+
+.dates-group {
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  padding: 10px 10px 12px;
+}
+
+.dates-title {
+  font-size: .82rem;
+  color: #475569;
+  font-weight: 700;
+  margin-bottom: 6px;
+  display:flex; align-items:center; gap:6px;
+}
+
+.chips {
+  display:flex; flex-wrap: wrap; gap: 8px;
+}
+.chip {
+  display:inline-flex; align-items:center; gap:6px;
+  border:1px solid #bfdbfe;            /* azul clarinha */
+  background:#f8fbff;
   color:#0f172a;
-  font-size:.82rem;
-  font-weight:700;
-  margin-top: 2px;
+  border-radius:999px;
+  font-size:.78rem;
+  padding:4px 10px;
+  white-space:nowrap;
 }
+.chip b { font-weight:700; color:#0f172a; }
 
-/* Local */
-.local { font-size:.85rem; color:#0f172a; }
+/* local */
+.local { font-size:.9rem; color:#0f172a; }
 
-/* Mensagem */
+/* estado / mensagens */
 .estado-lista { margin: 8px 0; color:#475569; }
 
-/* Lightbox */
+/* lightbox */
 #lightbox {
   position: fixed; inset:0; background: rgba(0,0,0,.65);
   display: none; align-items: center; justify-content: center; z-index: 50;
@@ -162,3 +167,4 @@
 }
 #lightbox .lb-prev { left: 24px; }
 #lightbox .lb-next { right: 24px; }
+
