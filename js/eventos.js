@@ -9,7 +9,6 @@ const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 // Converte 'YYYY-MM-DD' (ou ISO com hora) em 'DD/MM/YYYY' sem criar Date()
 function formatDate(d) {
   if (!d) return '-';
-  // aceita 'YYYY-MM-DD' puro ou ISO (pega só os 10 primeiros)
   const ymd = String(d).slice(0, 10);
   const [y, m, dd] = ymd.split('-');
   if (!y || !m || !dd) return '-';
@@ -96,7 +95,6 @@ const lightbox = (() => {
 
 // === “Ler mais / Ler menos” ===
 function applyReadMore(descEl) {
-  // só adiciona se estiver truncado
   const needs = descEl.scrollHeight > descEl.clientHeight + 2;
   if (!needs) return;
 
@@ -106,11 +104,7 @@ function applyReadMore(descEl) {
   btn.textContent = 'Ler mais';
   btn.addEventListener('click', () => {
     const expanded = descEl.classList.toggle('expanded');
-    if (expanded) {
-      btn.textContent = 'Ler menos';
-    } else {
-      btn.textContent = 'Ler mais';
-    }
+    btn.textContent = expanded ? 'Ler menos' : 'Ler mais';
   });
   descEl.after(btn);
 }
@@ -150,21 +144,17 @@ async function carregarEventos(status = '') {
 }
 
 function criarCard(ev) {
-  // rótulos das datas
   const labelInicio = 'Início das adoções';
   const labelLimite = 'Data limite';
 
-  // descrição com quebras de linha preservadas
   const descricao = (ev.descricao || '').trim();
 
-  // imagens
   const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
   const firstImg = imgs[0]?.url || '';
 
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
-  // HEADER (carrossel simples)
   const media = document.createElement('div');
   media.className = 'card-media';
 
@@ -179,7 +169,6 @@ function criarCard(ev) {
       media.appendChild(img);
     });
 
-    // dots
     const dots = document.createElement('div');
     dots.className = 'dots';
     imgs.forEach((_, i) => {
@@ -191,7 +180,6 @@ function criarCard(ev) {
     });
     media.appendChild(dots);
 
-    // arrows
     const prev = document.createElement('button');
     prev.className = 'img-nav prev';
     prev.setAttribute('aria-label','Imagem anterior');
@@ -233,7 +221,6 @@ function criarCard(ev) {
     media.appendChild(img);
   }
 
-  // BODY
   const body = document.createElement('div');
   body.className = 'card-body';
 
@@ -248,7 +235,6 @@ function criarCard(ev) {
   desc.className = 'desc clamp-3';
   desc.textContent = descricao;
 
-  // Pills (só se > 0)
   const pills = document.createElement('div');
   pills.className = 'pills';
   if ((ev.cartinhas_total||0) > 0) {
@@ -266,6 +252,16 @@ function criarCard(ev) {
 
   const meta = document.createElement('div');
   meta.className = 'meta';
+
+  const extraEvento = ev.data_realizacao_evento
+    ? `
+      <div>
+        <div class="label">Data do evento</div>
+        <div class="value">${formatDate(ev.data_realizacao_evento)}</div>
+      </div>
+    `
+    : '';
+
   meta.innerHTML = `
     <div>
       <div class="label">Início das adoções</div>
@@ -275,6 +271,7 @@ function criarCard(ev) {
       <div class="label">Data limite</div>
       <div class="value">${formatDate(ev.data_limite_recebimento)}</div>
     </div>
+    ${extraEvento}
   `;
 
   const local = document.createElement('div');
@@ -283,7 +280,6 @@ function criarCard(ev) {
 
   body.appendChild(title);
   body.appendChild(desc);
-  // adiciona "ler mais" se necessário depois de renderizar
   setTimeout(() => applyReadMore(desc), 0);
   if (pills.childElementCount) body.appendChild(pills);
   body.appendChild(meta);
@@ -302,6 +298,7 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
 
 // start
 carregarEventos('');
+
 
 
 

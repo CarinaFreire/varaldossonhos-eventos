@@ -41,8 +41,8 @@ function mapEvento(rec) {
       }))
     : [];
 
-  // status: aceita suas 3 opções
-  const statusRaw = (f.status_evento || "").toString().toLowerCase(); // "em andamento" | "proximo" | "encerrado"
+  // status
+  const statusRaw = (f.status_evento || "").toString().toLowerCase();
 
   // normalização de contadores
   const cartinhas_total = toIntSafe(
@@ -58,13 +58,13 @@ function mapEvento(rec) {
     nome_evento: f.nome_evento ?? "",
     local_evento: f.local_evento ?? "",
     descricao: f.descricao ?? "",
-    data_evento: f.data_evento ?? null,
-    data_limite_recebimento: f.data_limite_recebimento ?? null,
+    data_evento: f.data_evento ?? null, // início das adoções
+    data_limite_recebimento: f.data_limite_recebimento ?? null, // limite das adoções
+    data_realizacao_evento: f.data_realizacao_evento ?? null, // <<< NOVO CAMPO (data do evento)
     status_evento: statusRaw,
     imagem,
     destacar_na_homepage: !!f.destacar_na_homepage,
 
-    // >>> NOVOS CAMPOS normalizados
     cartinhas_total,
     adocoes_total,
   };
@@ -95,3 +95,4 @@ export default async function handler(req, res) {
     err(res, 500, "Erro ao listar eventos.", e?.message || e?.toString());
   }
 }
+
