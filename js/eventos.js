@@ -1,36 +1,67 @@
 // js/eventos.js
+
 const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-/* ----- Datas sem erro de fuso (empurra para meio-dia local) ----- */
-function formatDate(d) {
-  if (!d) return '-';
-  const norm = String(d).length === 10 ? `${d}T12:00:00` : d;
-  const date = new Date(norm);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${dd}/${m}/${y}`;
+// ---- datas SEM timezone (YYYY-MM-DD -> DD/MM/YYYY)
+function formatYMD(ymd) {
+  if (!ymd || typeof ymd !== 'string') return '-';
+  const parts = ymd.split('-');
+  if (parts.length !== 3) return ymd;
+  const [y, m, d] = parts;
+  return `${d}/${m}/${y}`;
 }
 
-/* ----- Ordenação por status + data_evento ----- */
 function sortEventos(evts) {
   return evts.slice().sort((a, b) => {
     const sa = statusOrder[a.status_evento] ?? 99;
     const sb = statusOrder[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
-    const da = a.data_evento ? new Date((String(a.data_evento).length===10?`${a.data_evento}T12:00:00`:a.data_evento)).getTime() : Infinity;
-    const db = b.data_evento ? new Date((String(b.data_evento).length===10?`${b.data_evento}T12:00:00`:b.data_evento)).getTime() : Infinity;
-    return da - db;
+
+    const da = a.data_evento || '9999-12-31';
+    const db = b.data_evento || '9999-12-31';
+    return da < db ? -1 : da > db ? 1 : 0;
   });
 }
 
-/* ===== Lightbox (montagem preguiçosa) ===== */
+/* =======================
+   Modal de texto "Ler mais"
+   ======================= */
+(function mountTextModal(){
+  const tpl = document.createElement('div');
+  tpl.id = 'text-modal';
+  tpl.innerHTML = `
+    <div class="tm-backdrop" data-close="1"></div>
+    <div class="tm-dialog" role="dialog" aria-modal="true" aria-label="Texto completo">
+      <button class="tm-close" aria-label="Fechar">×</button>
+      <div class="tm-body"></div>
+    </div>
+  `;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.appendChild(tpl);
+    tpl.addEventListener('click', (e) => {
+      if (e.target.dataset.close) closeTextModal();
+    });
+    tpl.querySelector('.tm-close').addEventListener('click', closeTextModal);
+  });
+
+  function closeTextModal() {
+    tpl.classList.remove('on');
+  }
+
+  window.openTextModal = (html) => {
+    tpl.querySelector('.tm-body').innerHTML = html;
+    tpl.classList.add('on');
+  };
+})();
+
+/* =======================
+   Lightbox (imagens)
+   ======================= */
 const lightbox = (() => {
   let box, imgEl, prevBtn, nextBtn, closeBtn;
-  let imgs = [], idx = 0;
-  let mounted = false;
+  let imgs = [], idx = 0, mounted = false;
 
   function mount() {
     if (mounted) return true;
@@ -79,36 +110,9 @@ const lightbox = (() => {
   };
 })();
 
-/* ===== Ler mais / Ler menos ===== */
-function applyReadMore(descEl) {
-  const needs = descEl.scrollHeight > descEl.clientHeight + 2;
-  if (!needs) return;
-
-  const btn = document.createElement('button');
-  btn.className = 'read-more';
-  btn.type = 'button';
-  btn.textContent = 'Ler mais';
-  btn.addEventListener('click', () => {
-    const expanded = descEl.classList.toggle('expanded');
-    btn.textContent = expanded ? 'Ler menos' : 'Ler mais';
-  });
-  descEl.after(btn);
-}
-
-/* ===== Badge de status com emoji + cor ===== */
-function badgeStatus(status) {
-  const s = (status || '').toLowerCase();
-  const map = {
-    'em andamento': { cls: 'andamento', ico: '⏳' },
-    'proximo':       { cls: 'proximo',   ico: '📅' },
-    'encerrado':     { cls: 'encerrado', ico: '🔒' },
-  };
-  const m = map[s];
-  if (!m) return '';
-  return `<span class="badge ${m.cls}"><span class="b-ico">${m.ico}</span><span class="b-txt">${s}</span></span>`;
-}
-
-/* ===== Carregar e renderizar ===== */
+/* =======================
+   Carregar / Renderizar
+   ======================= */
 async function carregarEventos(status = '') {
   const estadoLista = document.getElementById('estado-lista');
   const grid = document.getElementById('eventos-grid');
@@ -130,31 +134,47 @@ async function carregarEventos(status = '') {
       return;
     }
 
-    for (const ev of eventos) {
-      grid.appendChild(criarCard(ev));
-    }
-
+    for (const ev of eventos) grid.appendChild(criarCard(ev));
     estadoLista.textContent = '';
   } catch (e) {
     estadoLista.textContent = 'Erro ao carregar eventos.';
     console.error(e);
   } finally {
-    grid.removeAttribute('aria-busy');
+    document.getElementById('eventos-grid').removeAttribute('aria-busy');
   }
 }
 
-function criarCard(ev) {
-  const descricao = (ev.descricao || '').trim();
-  const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
-  const firstImg = imgs[0]?.url || '';
+/* =======================
+   Helpers de UI
+   ======================= */
+function statusBadge(statusRaw) {
+  const s = (statusRaw || '').toLowerCase();
+  let cls = '', emoji = '', text = s;
+  if (s === 'em andamento') { cls = 'andamento'; emoji = '⏳'; text = 'em andamento'; }
+  else if (s === 'proximo') { cls = 'proximo'; emoji = '📅'; text = 'proximo'; }
+  else if (s === 'encerrado') { cls = 'encerrado'; emoji = '🔒'; text = 'encerrado'; }
+  return `<span class="status-badge ${cls}"><span class="emoji">${emoji}</span>${text}</span>`;
+}
 
+function applyReadMore(btn, descText) {
+  btn.addEventListener('click', () => {
+    const html = `<div class="tm-title">Descrição do evento</div><div class="tm-text">${descText
+      .replace(/\n/g, '<br>')}</div>`;
+    window.openTextModal(html);
+  });
+}
+
+/* =======================
+   Card
+   ======================= */
+function criarCard(ev) {
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
-  /* HEADER */
+  // HEADER (imagem / carrossel simples)
   const media = document.createElement('div');
   media.className = 'card-media';
-
+  const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
   if (imgs.length) {
     imgs.forEach((im, i) => {
       const img = document.createElement('img');
@@ -208,18 +228,9 @@ function criarCard(ev) {
     media.addEventListener('mouseenter', stopAuto);
     media.addEventListener('mouseleave', startAuto);
     startAuto();
-
-  } else if (firstImg) {
-    const img = document.createElement('img');
-    img.src = firstImg;
-    img.alt = ev.nome_evento || 'Imagem do evento';
-    img.className = 'card-img';
-    img.style.display = 'block';
-    img.addEventListener('click', () => lightbox.open([{ url: firstImg }], 0));
-    media.appendChild(img);
   }
 
-  /* BODY */
+  // BODY
   const body = document.createElement('div');
   body.className = 'card-body';
 
@@ -227,14 +238,20 @@ function criarCard(ev) {
   title.className = 'card-title';
   title.innerHTML = `
     <h3>${ev.nome_evento || ''}</h3>
-    ${badgeStatus(ev.status_evento)}
+    ${statusBadge(ev.status_evento)}
   `;
 
   const desc = document.createElement('p');
   desc.className = 'desc clamp-3';
-  desc.textContent = descricao;
+  desc.textContent = (ev.descricao || '').trim();
 
-  /* Pills (Cartinhas / Adoções totais, quando > 0) */
+  const btnLM = document.createElement('button');
+  btnLM.className = 'read-more';
+  btnLM.type = 'button';
+  btnLM.textContent = 'Ler mais';
+  applyReadMore(btnLM, (ev.descricao || '').trim());
+
+  // Pills de contadores (como estavam)
   const pills = document.createElement('div');
   pills.className = 'pills';
   if ((ev.cartinhas_total || 0) > 0) {
@@ -250,43 +267,36 @@ function criarCard(ev) {
     pills.appendChild(p);
   }
 
-  /* Chips de datas */
-  const chipsWrap = document.createElement('div');
-  chipsWrap.style.display = 'grid';
-  chipsWrap.style.gap = '10px';
-
-  // Adoções — linha título + linha "início | fim"
-  const chipAd = document.createElement('div');
-  chipAd.className = 'big-chip';
-  chipAd.innerHTML = `
-    <div class="chip-title-row">📬 <span>Adoções</span></div>
-    <div class="chip-subrow">
-      <span>início: <b>${formatDate(ev.data_evento)}</b></span>
-      <span class="chip-bar">|</span>
-      <span>fim: <b>${formatDate(ev.data_limite_recebimento)}</b></span>
+  // ======= CHIP ADOÇÕES =======
+  const chipA = document.createElement('div');
+  chipA.className = 'chip chip-ado';
+  chipA.innerHTML = `
+    <div class="chip-title">📬 <span>Adoções</span></div>
+    <div class="chip-row">
+      <span><b>início:</b> ${formatYMD(ev.data_evento)}</span>
+      <span class="sep">|</span>
+      <span><b>fim:</b> ${formatYMD(ev.data_limite_recebimento)}</span>
     </div>
   `;
 
-  // Evento — uma única linha “🎉 Evento : dd/mm/aaaa”
-  const chipEv = document.createElement('div');
-  chipEv.className = 'big-chip';
-  chipEv.innerHTML = `
-    <div class="chip-title-row">🎉 <span>Evento</span><span class="ev-date">: ${formatDate(ev.data_realizacao_evento)}</span></div>
+  // ======= BLOCO EVENTO =======
+  const chipE = document.createElement('div');
+  chipE.className = 'chip chip-evento';
+  chipE.innerHTML = `
+    <div class="chip-title">🎉 <span>Evento</span></div>
+    <div class="chip-line"><b>Data:</b> ${formatYMD(ev.data_realizacao_evento)}</div>
   `;
-
-  chipsWrap.appendChild(chipAd);
-  chipsWrap.appendChild(chipEv);
-
-  /* Montagem */
-  body.appendChild(title);
-  body.appendChild(desc);
-  setTimeout(() => applyReadMore(desc), 0);
-  if (pills.childElementCount) body.appendChild(pills);
-  body.appendChild(chipsWrap);
 
   const local = document.createElement('div');
   local.className = 'local';
   local.innerHTML = `<b>Local:</b> ${ev.local_evento || '-'}`;
+
+  body.appendChild(title);
+  body.appendChild(desc);
+  body.appendChild(btnLM);
+  if (pills.childElementCount) body.appendChild(pills);
+  body.appendChild(chipA);
+  body.appendChild(chipE);
   body.appendChild(local);
 
   wrapper.appendChild(media);
@@ -304,5 +314,6 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
+
 
 
