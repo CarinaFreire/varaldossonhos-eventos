@@ -262,9 +262,9 @@ function criarCard(ev) {
   chipA.innerHTML = `
     <div class="chip-title">📬 <span>Adoções</span></div>
     <div class="chip-kv">
-      <span class="label">início:</span><span class="value">${formatDate(ev.data_evento)}</span>
+      <span class="label">Início:</span><span class="value">${formatDate(ev.data_evento)}</span>
       <span class="sep">|</span>
-      <span class="label">fim:</span><span class="value">${formatDate(ev.data_limite_recebimento)}</span>
+      <span class="label">Fim:</span><span class="value">${formatDate(ev.data_limite_recebimento)}</span>
     </div>
   `;
 
