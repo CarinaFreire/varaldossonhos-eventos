@@ -215,7 +215,7 @@ function criarCard(ev) {
     (ev.status_evento || '');
   const statusEmoji =
     ev.status_evento === 'em andamento' ? '⏳' :
-    ev.status_evento === 'proximo' ? '📅' : '🔒';
+    ev.status_evento === 'próximo' ? '📅' : '🔒';
 
   const title = document.createElement('div');
   title.className = 'card-title';
@@ -231,7 +231,7 @@ function criarCard(ev) {
   desc.className = 'desc clamp-3';
   desc.textContent = descricao;
 
-  // Pills (ESQUERDA, como era antes)
+  // Pills (ESQUERDA)
   const pills = document.createElement('div');
   pills.className = 'pills';
   if ((ev.cartinhas_total || 0) > 0) {
