@@ -165,17 +165,36 @@ function criarCard(ev){
   pillCart.className='pill'+(disponiveis>0 && ev.status_evento!=='encerrado' ? ' clickable':' disabled');
   pillCart.innerHTML=`💌 <span class="k">Cartinhas:</span> <span class="v">${totalCart}</span> <span class="k">( ${disponiveis} disp.)</span>`;
 
-/* >>> click “Cartinhas”: tenta abrir link oficial; se não houver, usa fallback */
+/* >>> click “Cartinhas”: abre somente as cartinhas do evento */
 if (disponiveis > 0 && ev.status_evento !== 'encerrado') {
-  pillCart.addEventListener('click', () => {
-    const url =
-      ev.cartinhas_url ||
-      ev.cartinhas_view_url ||
-      ev.link_cartinhas ||
-      ev.url_cartinhas ||
-      'https://varaldossonnhos2-0.vercel.app/pages/cartinha.html';
+  pillCart.addEventListener('click', async () => {
 
-    window.open(url, '_blank', 'noopener');
+    // 1️⃣ Pega os IDs vinculados no campo "cartinha"
+    const linked = Array.isArray(ev.cartinha) ? ev.cartinha.map(String) : [];
+
+    // 2️⃣ Se não houver vínculo, abre o Varal completo como fallback
+    if (!linked.length) {
+      window.open(VARAL_URL, '_blank', 'noopener');
+      return;
+    }
+
+    // 3️⃣ Busca cartinhas da API filtrando SOMENTE as do evento
+    try {
+      const r = await fetch(`/api/cartinha.js?status=disponível`);
+      const j = await r.json();
+      const todas = j.cartinha || [];
+
+      const set = new Set(linked);
+      const filtradas = todas.filter(c => set.has(String(c.id)));
+
+      // 4️⃣ Abre o Varal só com as cartinhas filtradas
+      const url = VARAL_URL + `?ids=${linked.join(',')}`;
+      window.open(url, '_blank', 'noopener');
+
+    } catch(e) {
+      console.error(e);
+      window.open(VARAL_URL, '_blank', 'noopener');
+    }
   });
 }
 
