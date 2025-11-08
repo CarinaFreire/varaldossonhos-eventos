@@ -4,15 +4,28 @@ const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
+/* ===== Datas sem timezone ===== */
+
+// Converte 'YYYY-MM-DD' (ou ISO com hora) em 'DD/MM/YYYY' sem criar Date()
 function formatDate(d) {
   if (!d) return '-';
-  // força timezone local (sem -1 dia)
-  const date = new Date(d);
-  const y = date.getFullYear();
-  const m = String(date.getMonth()+1).padStart(2,'0');
-  const dd = String(date.getDate()).padStart(2,'0');
+  // aceita 'YYYY-MM-DD' puro ou ISO (pega só os 10 primeiros)
+  const ymd = String(d).slice(0, 10);
+  const [y, m, dd] = ymd.split('-');
+  if (!y || !m || !dd) return '-';
   return `${dd}/${m}/${y}`;
 }
+
+// Converte 'YYYY-MM-DD' (ou ISO) em número YYYYMMDD para ordenar sem fuso
+function ymdToInt(d) {
+  if (!d) return Infinity;
+  const ymd = String(d).slice(0, 10);
+  const [y, m, dd] = ymd.split('-');
+  if (!y || !m || !dd) return Infinity;
+  return parseInt(`${y}${m}${dd}`, 10);
+}
+
+/* ================================= */
 
 function sortEventos(evts) {
   return evts.slice().sort((a,b) => {
@@ -20,8 +33,9 @@ function sortEventos(evts) {
     const sb = statusOrder[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
 
-    const da = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
-    const db = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
+    // ordena por data_evento sem usar Date()
+    const da = ymdToInt(a.data_evento);
+    const db = ymdToInt(b.data_evento);
     return da - db;
   });
 }
@@ -254,11 +268,11 @@ function criarCard(ev) {
   meta.className = 'meta';
   meta.innerHTML = `
     <div>
-      <div class="label">${labelInicio}</div>
+      <div class="label">Início das adoções</div>
       <div class="value">${formatDate(ev.data_evento)}</div>
     </div>
     <div>
-      <div class="label">${labelLimite}</div>
+      <div class="label">Data limite</div>
       <div class="value">${formatDate(ev.data_limite_recebimento)}</div>
     </div>
   `;
