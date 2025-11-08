@@ -165,16 +165,15 @@ function criarCard(ev){
   pillCart.className='pill'+(disponiveis>0 && ev.status_evento!=='encerrado' ? ' clickable':' disabled');
   pillCart.innerHTML=`💌 <span class="k">Cartinhas:</span> <span class="v">${totalCart}</span> <span class="k">( ${disponiveis} disp.)</span>`;
 
-  /* >>> click “Cartinhas”: abre as cartinhas ORIGINAIS */
+/* >>> click “Cartinhas”: tenta abrir link oficial; se não houver, usa fallback */
 if (disponiveis > 0 && ev.status_evento !== 'encerrado') {
   pillCart.addEventListener('click', () => {
-    // se o evento tiver um link próprio, usa; senão abre o Varal padrão
-    const url =
+    const url = 'https://varaldossonnhos2-0.vercel.app/'
       ev.cartinhas_url ||
       ev.cartinhas_view_url ||
       ev.link_cartinhas ||
       ev.url_cartinhas ||
-      '/varal'; // <- cartinhas originais
+      VARAL_URL; // ✅ agora abre o Varal correto
 
     window.open(url, '_blank', 'noopener');
   });
