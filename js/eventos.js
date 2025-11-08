@@ -4,36 +4,47 @@ const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-function formatDate(d) {
-  if (!d) return '-';
-  // força timezone local
-  const date = new Date(d);
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const dd = String(date.getDate()).padStart(2, '0');
-  return `${dd}/${m}/${y}`;
+/* -------- Datas sem timezone -------- */
+// Aceita "YYYY-MM-DD" e também "YYYY-MM-DDTHH:MM:SSZ" (corta no 'T').
+function formatDateBR(ymdOrIso) {
+  if (!ymdOrIso) return '-';
+  const ymd = String(ymdOrIso).split('T')[0]; // garante só a parte YYYY-MM-DD
+  const parts = ymd.split('-');
+  if (parts.length !== 3) return '-';
+  const [y, m, d] = parts;
+  return `${d}/${m}/${y}`;
 }
 
+// Ordena por status e depois por data_evento (string YYYY-MM-DD)
 function sortEventos(evts) {
   return evts.slice().sort((a, b) => {
     const sa = statusOrder[a.status_evento] ?? 99;
     const sb = statusOrder[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
-    const da = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
-    const db = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
-    return da - db;
+
+    const A = (a.data_evento && typeof a.data_evento === 'string')
+      ? a.data_evento.split('T')[0]
+      : '9999-12-31';
+    const B = (b.data_evento && typeof b.data_evento === 'string')
+      ? b.data_evento.split('T')[0]
+      : '9999-12-31';
+    return A.localeCompare(B);
   });
 }
 
-/* ===== Lightbox (preguiçosa) ===== */
+/* =======================
+   Lightbox (montagem preguiçosa)
+   ======================= */
 const lightbox = (() => {
   let box, imgEl, prevBtn, nextBtn, closeBtn;
-  let imgs = [], idx = 0, mounted = false;
+  let imgs = [], idx = 0;
+  let mounted = false;
 
   function mount() {
     if (mounted) return true;
     box = document.getElementById('lightbox');
     if (!box) return false;
+
     imgEl   = box.querySelector('.lb-img');
     prevBtn = box.querySelector('.lb-prev');
     nextBtn = box.querySelector('.lb-next');
@@ -60,7 +71,9 @@ const lightbox = (() => {
 
     lightbox._show = show;
     lightbox._onKey = onKey;
-    mounted = true; return true;
+
+    mounted = true;
+    return true;
   }
 
   return {
@@ -75,10 +88,13 @@ const lightbox = (() => {
   };
 })();
 
-/* ===== Ler mais / Ler menos ===== */
+/* =======================
+   “Ler mais / Ler menos”
+   ======================= */
 function applyReadMore(descEl) {
   const needs = descEl.scrollHeight > descEl.clientHeight + 2;
   if (!needs) return;
+
   const btn = document.createElement('button');
   btn.className = 'read-more';
   btn.type = 'button';
@@ -90,7 +106,9 @@ function applyReadMore(descEl) {
   descEl.after(btn);
 }
 
-/* ===== Carregar / renderizar ===== */
+/* =======================
+   Carregamento / render
+   ======================= */
 async function carregarEventos(status = '') {
   const estadoLista = document.getElementById('estado-lista');
   const grid = document.getElementById('eventos-grid');
@@ -112,7 +130,10 @@ async function carregarEventos(status = '') {
       return;
     }
 
-    for (const ev of eventos) grid.appendChild(criarCard(ev));
+    for (const ev of eventos) {
+      grid.appendChild(criarCard(ev));
+    }
+
     estadoLista.textContent = '';
   } catch (e) {
     estadoLista.textContent = 'Erro ao carregar eventos.';
@@ -130,7 +151,7 @@ function criarCard(ev) {
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
-  /* HEADER */
+  // HEADER
   const media = document.createElement('div');
   media.className = 'card-media';
 
@@ -145,7 +166,8 @@ function criarCard(ev) {
       media.appendChild(img);
     });
 
-    const dots = document.createElement('div'); dots.className = 'dots';
+    const dots = document.createElement('div');
+    dots.className = 'dots';
     imgs.forEach((_, i) => {
       const d = document.createElement('button');
       d.className = 'dot' + (i === 0 ? ' on' : '');
@@ -156,25 +178,30 @@ function criarCard(ev) {
     media.appendChild(dots);
 
     const prev = document.createElement('button');
-    prev.className = 'img-nav prev'; prev.setAttribute('aria-label','Imagem anterior'); prev.textContent = '‹';
+    prev.className = 'img-nav prev';
+    prev.setAttribute('aria-label', 'Imagem anterior');
+    prev.textContent = '‹';
     const next = document.createElement('button');
-    next.className = 'img-nav next'; next.setAttribute('aria-label','Próxima imagem'); next.textContent = '›';
-    media.appendChild(prev); media.appendChild(next);
+    next.className = 'img-nav next';
+    next.setAttribute('aria-label', 'Próxima imagem');
+    next.textContent = '›';
+    media.appendChild(prev);
+    media.appendChild(next);
 
     let idx = 0, auto;
-    function show(n){ 
+    function show(n) {
       const imgsEls = media.querySelectorAll('.card-img');
       const dotsEls = media.querySelectorAll('.dot');
-      imgsEls.forEach((el,i)=> el.style.display = i===n?'block':'none');
-      dotsEls.forEach((el,i)=> el.classList.toggle('on', i===n));
+      imgsEls.forEach((el, i) => el.style.display = i === n ? 'block' : 'none');
+      dotsEls.forEach((el, i) => el.classList.toggle('on', i === n));
       idx = n;
     }
-    function setSlide(n){ show(n); restartAuto(); }
-    function prevSlide(){ setSlide((idx - 1 + imgs.length) % imgs.length); }
-    function nextSlide(){ setSlide((idx + 1) % imgs.length); }
-    function startAuto(){ auto = setInterval(nextSlide, 4000); }
-    function stopAuto(){ clearInterval(auto); }
-    function restartAuto(){ stopAuto(); startAuto(); }
+    function setSlide(n) { show(n); restartAuto(); }
+    function prevSlide() { setSlide((idx - 1 + imgs.length) % imgs.length); }
+    function nextSlide() { setSlide((idx + 1) % imgs.length); }
+    function startAuto() { auto = setInterval(nextSlide, 4000); }
+    function stopAuto() { clearInterval(auto); }
+    function restartAuto() { stopAuto(); startAuto(); }
 
     prev.addEventListener('click', prevSlide);
     next.addEventListener('click', nextSlide);
@@ -184,59 +211,76 @@ function criarCard(ev) {
 
   } else if (firstImg) {
     const img = document.createElement('img');
-    img.src = firstImg; img.alt = ev.nome_evento || 'Imagem do evento';
-    img.className = 'card-img'; img.style.display = 'block';
-    img.addEventListener('click', () => lightbox.open([{ url:firstImg }], 0));
+    img.src = firstImg;
+    img.alt = ev.nome_evento || 'Imagem do evento';
+    img.className = 'card-img';
+    img.style.display = 'block';
+    img.addEventListener('click', () => lightbox.open([{ url: firstImg }], 0));
     media.appendChild(img);
   }
 
-  /* BODY */
-  const body = document.createElement('div'); body.className = 'card-body';
+  // BODY
+  const body = document.createElement('div');
+  body.className = 'card-body';
 
   const title = document.createElement('div');
   title.className = 'card-title';
+  // status badge (menor)
+  const badge = ev.status_evento
+    ? `<span class="status-badge">
+         ${ev.status_evento === 'em andamento' ? '⏳' :
+            ev.status_evento === 'proximo' ? '📅' : '🔒'}
+         <span>${ev.status_evento}</span>
+       </span>`
+    : '';
+
   title.innerHTML = `
     <h3>${ev.nome_evento || ''}</h3>
-    ${ev.status_evento ? `
-      <span class="badge ${ev.status_evento.includes('andamento') ? 'andamento' : ev.status_evento}">
-        ${ev.status_evento.includes('andamento') ? '⏳' : ev.status_evento === 'proximo' ? '📅' : '🔒'}
-        ${ev.status_evento}
-      </span>` : ''}
+    ${badge}
   `;
 
   const desc = document.createElement('p');
   desc.className = 'desc clamp-3';
   desc.textContent = descricao;
 
-  /* Pills (se > 0) */
-  const pills = document.createElement('div'); pills.className = 'pills';
+  // Pills (centralizadas)
+  const pills = document.createElement('div');
+  pills.className = 'pills';
   if ((ev.cartinhas_total || 0) > 0) {
-    const p = document.createElement('span'); p.className = 'pill';
+    const p = document.createElement('span');
+    p.className = 'pill';
     p.innerHTML = `Cartinhas: <b>${ev.cartinhas_total}</b>`;
     pills.appendChild(p);
   }
   if ((ev.adocoes_total || 0) > 0) {
-    const p = document.createElement('span'); p.className = 'pill';
+    const p = document.createElement('span');
+    p.className = 'pill';
     p.innerHTML = `Adoções: <b>${ev.adocoes_total}</b>`;
     pills.appendChild(p);
   }
 
-  /* ===== Datas — agrupadas ===== */
-  const dates = document.createElement('div');
-  dates.className = 'dates';
-  dates.innerHTML = `
-    <div class="dates-group">
-      <div class="dates-title">📬 Adoções</div>
-      <div class="chips">
-        <span class="chip"><b>início:</b> ${formatDate(ev.data_evento)}</span>
-        <span class="chip"><b>limite:</b> ${formatDate(ev.data_limite_recebimento)}</span>
-      </div>
+  // Bloco de Adoções + Evento (layout novo, clean)
+  const meta = document.createElement('div');
+  meta.className = 'meta clean-meta';
+
+  // ADOÇÕES (título + linha com chips início/limite)
+  const adocoesBlock = document.createElement('div');
+  adocoesBlock.className = 'chip-block';
+  adocoesBlock.innerHTML = `
+    <div class="chip-title">📬 Adoções</div>
+    <div class="chip-row">
+      <span class="chip"><span class="chip-label">início:</span> ${formatDateBR(ev.data_evento)}</span>
+      <span class="chip"><span class="chip-label">limite:</span> ${formatDateBR(ev.data_limite_recebimento)}</span>
     </div>
-    <div class="dates-group">
-      <div class="dates-title">🎉 Evento</div>
-      <div class="chips">
-        <span class="chip">${formatDate(ev.data_realizacao_evento)}</span>
-      </div>
+  `;
+
+  // EVENTO (título + data)
+  const eventoBlock = document.createElement('div');
+  eventoBlock.className = 'chip-block';
+  eventoBlock.innerHTML = `
+    <div class="chip-title">🎉 Evento</div>
+    <div class="chip-row single">
+      <span class="chip"><span class="chip-label sr-only">data:</span> ${formatDateBR(ev.data_realizacao_evento)}</span>
     </div>
   `;
 
@@ -248,7 +292,9 @@ function criarCard(ev) {
   body.appendChild(desc);
   setTimeout(() => applyReadMore(desc), 0);
   if (pills.childElementCount) body.appendChild(pills);
-  body.appendChild(dates);
+  meta.appendChild(adocoesBlock);
+  meta.appendChild(eventoBlock);
+  body.appendChild(meta);
   body.appendChild(local);
 
   wrapper.appendChild(media);
@@ -266,6 +312,7 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
+
 
 
 
