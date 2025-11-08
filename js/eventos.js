@@ -1,224 +1,294 @@
-/* ==========================
-   Agenda de Eventos — Frontend
-   ETAPA 1: corrigir exibição de datas (sem timezone)
-   ========================== */
+// js/eventos.js
 
-const $grid = document.getElementById("eventos-grid");
-const $status = document.getElementById("filtro-status");
-const $estado = document.getElementById("estado-lista");
+const API_URL = '/api/eventos';
 
-/* -------- Utils de data sem timezone -------- */
+const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-// Recebe 'YYYY-MM-DD' e devolve 'DD/MM/YYYY'.
-// Não cria Date(), logo não sofre offset de fuso.
-function fmtBR(ymd) {
-  if (!ymd || typeof ymd !== "string") return "-";
-  const parts = ymd.split("-");
-  if (parts.length !== 3) return ymd;
-  const [yyyy, mm, dd] = parts;
-  return `${dd}/${mm}/${yyyy}`;
+function formatDate(d) {
+  if (!d) return '-';
+  // força timezone local (sem -1 dia)
+  const date = new Date(d);
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const dd = String(date.getDate()).padStart(2,'0');
+  return `${dd}/${m}/${y}`;
 }
-
-// Comparação segura de duas strings 'YYYY-MM-DD' (sem criar Date)
-function cmpYMD(a, b) {
-  const A = (a && a.length === 10) ? a : "9999-12-31";
-  const B = (b && b.length === 10) ? b : "9999-12-31";
-  if (A < B) return -1;
-  if (A > B) return 1;
-  return 0;
-}
-
-/* -------- API -------- */
-
-async function fetchEventos(status = "") {
-  try {
-    $estado.textContent = "Carregando eventos...";
-    $grid.setAttribute("aria-busy", "true");
-
-    const url = status ? `/api/eventos?status=${encodeURIComponent(status)}` : "/api/eventos";
-    const r = await fetch(url);
-    const j = await r.json();
-
-    if (!j.sucesso) throw new Error(j.mensagem || "Falha na API");
-    return j.eventos || [];
-  } catch (e) {
-    console.error(e);
-    $estado.textContent = "Erro ao carregar eventos.";
-    return [];
-  } finally {
-    $grid.setAttribute("aria-busy", "false");
-  }
-}
-
-/* -------- Ordenação por status + data_evento -------- */
-
-const STATUS_ORDER = {
-  "em andamento": 0,
-  "proximo": 1,
-  "encerrado": 2,
-};
 
 function sortEventos(evts) {
-  return [...evts].sort((a, b) => {
-    const sa = STATUS_ORDER[a.status_evento] ?? 99;
-    const sb = STATUS_ORDER[b.status_evento] ?? 99;
+  return evts.slice().sort((a,b) => {
+    const sa = statusOrder[a.status_evento] ?? 99;
+    const sb = statusOrder[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
-    // dentro do mesmo status, ordenar por data_evento ascendente (sem Date())
-    return cmpYMD(a.data_evento, b.data_evento);
+
+    const da = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
+    const db = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
+    return da - db;
   });
 }
 
-/* -------- Renderização -------- */
+// ==== Lightbox simples ====
+const lightbox = (() => {
+  let box, imgEl, prevBtn, nextBtn, closeBtn, imgs = [], idx = 0;
 
-function pillStatus(status) {
-  const s = (status || "").toLowerCase();
-  const classes = ["badge"];
-  let text = s;
-  if (s === "em andamento") { classes.push("andamento"); text = "em andamento"; }
-  else if (s === "proximo")  { classes.push("proximo");    text = "proximo"; }
-  else if (s === "encerrado"){ classes.push("encerrado");  text = "encerrado"; }
-  return `<span class="${classes.join(" ")}">${text}</span>`;
-}
+  function mount() {
+    box = document.getElementById('lightbox');
+    imgEl = box.querySelector('.lb-img');
+    prevBtn = box.querySelector('.lb-prev');
+    nextBtn = box.querySelector('.lb-next');
+    closeBtn = box.querySelector('.lb-close');
 
-function escapeHtml(s) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+    function show() {
+      imgEl.src = imgs[idx].url;
+    }
+    function prev() {
+      idx = (idx - 1 + imgs.length) % imgs.length;
+      show();
+    }
+    function next() {
+      idx = (idx + 1) % imgs.length;
+      show();
+    }
+    function close() {
+      box.classList.remove('on');
+      box.setAttribute('aria-hidden', 'true');
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    }
 
-// Monta o HTML do card de um evento (layout igual ao seu)
-function cardEvento(ev) {
-  const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
-  const primeira = imgs[0]?.url || "";
-
-  // descrição (mantém quebras de linha; ler mais continua igual)
-  const desc = (ev.descricao || "").trim();
-
-  return `
-  <article class="card" tabindex="0">
-    <div class="card-media" ${primeira ? `data-has-img="1"` : ""}>
-      ${primeira ? `<img class="card-img" src="${primeira}" alt="${ev.nome_evento}" loading="lazy" />` : ""}
-
-      ${imgs.length > 1 ? `
-        <button class="img-nav prev" aria-label="Imagem anterior">‹</button>
-        <button class="img-nav next" aria-label="Próxima imagem">›</button>
-        <div class="dots">
-          ${imgs.map((_, i) => `<button class="dot ${i===0?"on":""}" aria-label="Ir para imagem ${i+1}"></button>`).join("")}
-        </div>
-      ` : ""}
-    </div>
-
-    <div class="card-body">
-      <div class="card-title">
-        <h3>${ev.nome_evento || "Evento"}</h3>
-        ${pillStatus(ev.status_evento)}
-      </div>
-
-      <p class="desc clamp" data-full="${encodeURIComponent(desc)}">
-        ${desc ? escapeHtml(desc) : ""}
-      </p>
-      ${desc && desc.length > 140 ? `<button class="ver-mais" type="button">Ler mais</button>` : ""}
-
-      <div class="meta">
-        <div>
-          <div class="label">Início das adoções</div>
-          <div class="value">${fmtBR(ev.data_evento)}</div>
-        </div>
-        <div>
-          <div class="label">Data limite</div>
-          <div class="value">${fmtBR(ev.data_limite_recebimento)}</div>
-        </div>
-      </div>
-
-      <div class="local"><strong>Local:</strong> ${ev.local_evento || "-"}</div>
-    </div>
-  </article>
-  `;
-}
-
-function renderEventos(lista) {
-  $grid.innerHTML = lista.map(cardEvento).join("");
-  $estado.textContent = lista.length ? "" : "Nenhum evento encontrado.";
-
-  // liga as interações que você já tinha
-  wireLeiaMais();
-  wireLightbox();
-  wireCarrossel();
-}
-
-/* -------- Interações: "Ler mais", Lightbox, Carrossel (placeholders) -------- */
-
-function wireLeiaMais() {
-  $grid.querySelectorAll(".ver-mais").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const p = btn.previousElementSibling;
-      const full = decodeURIComponent(p.getAttribute("data-full") || "");
-      showLongText(full);
+    box.addEventListener('click', (e) => {
+      if (e.target === box) close();
     });
+    prevBtn.addEventListener('click', prev);
+    nextBtn.addEventListener('click', next);
+    closeBtn.addEventListener('click', close);
+
+    return {
+      open(list, start = 0) {
+        imgs = list; idx = start;
+        show();
+        box.classList.add('on');
+        box.setAttribute('aria-hidden', 'false');
+        document.addEventListener('keydown', onKey);
+      }
+    };
+  }
+
+  return mount();
+})();
+
+// === “Ler mais / Ler menos” ===
+function applyReadMore(descEl) {
+  // só adiciona se estiver truncado
+  const needs = descEl.scrollHeight > descEl.clientHeight + 2;
+  if (!needs) return;
+
+  const btn = document.createElement('button');
+  btn.className = 'read-more';
+  btn.type = 'button';
+  btn.textContent = 'Ler mais';
+  btn.addEventListener('click', () => {
+    const expanded = descEl.classList.toggle('expanded');
+    if (expanded) {
+      btn.textContent = 'Ler menos';
+    } else {
+      btn.textContent = 'Ler mais';
+    }
   });
+  descEl.after(btn);
 }
 
-function showLongText(texto) {
-  // abre em janela simples (mantém o que você já tinha)
-  const win = window.open("", "_blank", "width=600,height=600");
-  win.document.write(
-    `<pre style="white-space:pre-wrap; font-family:inherit; padding:16px;">${escapeHtml(texto)}</pre>`
-  );
-  win.document.close();
-}
+async function carregarEventos(status = '') {
+  const estadoLista = document.getElementById('estado-lista');
+  const grid = document.getElementById('eventos-grid');
 
-function wireLightbox() {
-  $grid.querySelectorAll(".card-media img").forEach(img => {
-    img.addEventListener("click", () => {
-      const src = img.getAttribute("src");
-      openLightbox([src], 0);
-    });
-  });
-}
+  estadoLista.textContent = 'Carregando eventos...';
+  grid.setAttribute('aria-busy', 'true');
 
-function openLightbox(urls, index) {
-  const lb = document.getElementById("lightbox");
-  if (!lb) return;
-  const $img = lb.querySelector(".lb-img");
-  const $prev = lb.querySelector(".lb-prev");
-  const $next = lb.querySelector(".lb-next");
-  let i = index;
+  try {
+    const url = status ? `${API_URL}?status=${encodeURIComponent(status)}` : API_URL;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (!data.sucesso) throw new Error(data.mensagem || 'Falha');
 
-  function show() { $img.src = urls[i]; }
-  function prev() { i = (i - 1 + urls.length) % urls.length; show(); }
-  function next() { i = (i + 1) % urls.length; show(); }
+    const eventos = sortEventos(data.eventos || []);
+    grid.innerHTML = '';
+    if (!eventos.length) {
+      estadoLista.textContent = 'Nenhum evento encontrado.';
+      grid.removeAttribute('aria-busy');
+      return;
+    }
 
-  lb.classList.add("on");
-  lb.setAttribute("aria-hidden", "false");
-  show();
+    for (const ev of eventos) {
+      grid.appendChild(criarCard(ev));
+    }
 
-  $prev.onclick = () => urls.length > 1 && prev();
-  $next.onclick = () => urls.length > 1 && next();
-  lb.querySelector(".lb-close").onclick = close;
-  function close() {
-    lb.classList.remove("on");
-    lb.setAttribute("aria-hidden", "true");
-    $img.src = "";
+    estadoLista.textContent = '';
+  } catch (e) {
+    estadoLista.textContent = 'Erro ao carregar eventos.';
+    console.error(e);
+  } finally {
+    grid.removeAttribute('aria-busy');
   }
 }
 
-function wireCarrossel() {
-  // placeholder: mantenha sua lógica anterior se você já tinha
+function criarCard(ev) {
+  // rótulos das datas
+  const labelInicio = 'Início das adoções';
+  const labelLimite = 'Data limite';
+
+  // descrição com quebras de linha preservadas
+  const descricao = (ev.descricao || '').trim();
+
+  // imagens
+  const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
+  const firstImg = imgs[0]?.url || '';
+
+  const wrapper = document.createElement('article');
+  wrapper.className = 'card';
+
+  // HEADER (carrossel simples)
+  const media = document.createElement('div');
+  media.className = 'card-media';
+
+  if (imgs.length) {
+    imgs.forEach((im, i) => {
+      const img = document.createElement('img');
+      img.src = im.url;
+      img.alt = ev.nome_evento || 'Imagem do evento';
+      img.className = 'card-img';
+      if (i === 0) img.style.display = 'block';
+      img.addEventListener('click', () => lightbox.open(imgs, i));
+      media.appendChild(img);
+    });
+
+    // dots
+    const dots = document.createElement('div');
+    dots.className = 'dots';
+    imgs.forEach((_, i) => {
+      const d = document.createElement('button');
+      d.className = 'dot' + (i === 0 ? ' on' : '');
+      d.type = 'button';
+      d.addEventListener('click', () => setSlide(i));
+      dots.appendChild(d);
+    });
+    media.appendChild(dots);
+
+    // arrows
+    const prev = document.createElement('button');
+    prev.className = 'img-nav prev';
+    prev.setAttribute('aria-label','Imagem anterior');
+    prev.textContent = '‹';
+    const next = document.createElement('button');
+    next.className = 'img-nav next';
+    next.setAttribute('aria-label','Próxima imagem');
+    next.textContent = '›';
+    media.appendChild(prev);
+    media.appendChild(next);
+
+    let idx = 0, auto;
+    function show(n) {
+      const imgsEls = media.querySelectorAll('.card-img');
+      const dotsEls = media.querySelectorAll('.dot');
+      imgsEls.forEach((el, i) => el.style.display = i === n ? 'block' : 'none');
+      dotsEls.forEach((el, i) => el.classList.toggle('on', i === n));
+      idx = n;
+    }
+    function setSlide(n) { show(n); restartAuto(); }
+    function prevSlide() { setSlide((idx - 1 + imgs.length) % imgs.length); }
+    function nextSlide() { setSlide((idx + 1) % imgs.length); }
+    function startAuto() { auto = setInterval(nextSlide, 4000); }
+    function stopAuto() { clearInterval(auto); }
+    function restartAuto() { stopAuto(); startAuto(); }
+
+    prev.addEventListener('click', prevSlide);
+    next.addEventListener('click', nextSlide);
+    media.addEventListener('mouseenter', stopAuto);
+    media.addEventListener('mouseleave', startAuto);
+    startAuto();
+  } else if (firstImg) {
+    const img = document.createElement('img');
+    img.src = firstImg;
+    img.alt = ev.nome_evento || 'Imagem do evento';
+    img.className = 'card-img';
+    img.style.display = 'block';
+    img.addEventListener('click', () => lightbox.open([{url:firstImg}], 0));
+    media.appendChild(img);
+  }
+
+  // BODY
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  const title = document.createElement('div');
+  title.className = 'card-title';
+  title.innerHTML = `
+    <h3>${ev.nome_evento || ''}</h3>
+    ${ev.status_evento ? `<span class="badge ${ev.status_evento.includes('andamento')?'andamento':ev.status_evento}">${ev.status_evento}</span>` : ''}
+  `;
+
+  const desc = document.createElement('p');
+  desc.className = 'desc clamp-3';
+  desc.textContent = descricao;
+
+  // Pills (só se > 0)
+  const pills = document.createElement('div');
+  pills.className = 'pills';
+  if ((ev.cartinhas_total||0) > 0) {
+    const p = document.createElement('span');
+    p.className = 'pill';
+    p.innerHTML = `Cartinhas: <b>${ev.cartinhas_total}</b>`;
+    pills.appendChild(p);
+  }
+  if ((ev.adocoes_total||0) > 0) {
+    const p = document.createElement('span');
+    p.className = 'pill';
+    p.innerHTML = `Adoções: <b>${ev.adocoes_total}</b>`;
+    pills.appendChild(p);
+  }
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.innerHTML = `
+    <div>
+      <div class="label">${labelInicio}</div>
+      <div class="value">${formatDate(ev.data_evento)}</div>
+    </div>
+    <div>
+      <div class="label">${labelLimite}</div>
+      <div class="value">${formatDate(ev.data_limite_recebimento)}</div>
+    </div>
+  `;
+
+  const local = document.createElement('div');
+  local.className = 'local';
+  local.innerHTML = `<b>Local:</b> ${ev.local_evento || '-'}`;
+
+  body.appendChild(title);
+  body.appendChild(desc);
+  // adiciona "ler mais" se necessário depois de renderizar
+  setTimeout(() => applyReadMore(desc), 0);
+  if (pills.childElementCount) body.appendChild(pills);
+  body.appendChild(meta);
+  body.appendChild(local);
+
+  wrapper.appendChild(media);
+  wrapper.appendChild(body);
+  return wrapper;
 }
 
-/* -------- Boot -------- */
+// filtro topo
+document.getElementById('filtro-status')?.addEventListener('change', (e) => {
+  const v = (e.target.value || '').toLowerCase();
+  carregarEventos(v);
+});
 
-async function boot() {
-  const status = ($status.value || "").trim();
-  const eventos = await fetchEventos(status);
-  const ordenados = sortEventos(eventos);
-  renderEventos(ordenados);
-}
+// start
+carregarEventos('');
 
-$status.addEventListener("change", boot);
-document.addEventListener("DOMContentLoaded", boot);
 
 
 
