@@ -173,7 +173,7 @@ if (disponiveis > 0 && ev.status_evento !== 'encerrado') {
       ev.cartinhas_view_url ||
       ev.link_cartinhas ||
       ev.url_cartinhas ||
-      'https://varaldossonnhos2-0.vercel.app/';
+      'https://varaldossonnhos2-0.vercel.app/pages/cartinha.html';
 
     window.open(url, '_blank', 'noopener');
   });
