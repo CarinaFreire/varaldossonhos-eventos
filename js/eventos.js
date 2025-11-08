@@ -325,7 +325,7 @@ function criarCard(ev) {
   meta.innerHTML = `
     <div>
       <div class="label">📬 Adoções</div>
-      <div class="value mini"><b>início:</b> ${formatDate(ev.data_evento)} &nbsp; | &nbsp; <b>fim:</b> ${formatDate(ev.data_limite_recebimento)}</div>
+      <div class="value mini"><b>Início:</b> ${formatDate(ev.data_evento)} &nbsp; | &nbsp; <b>Fim:</b> ${formatDate(ev.data_limite_recebimento)}</div>
     </div>
     <div>
       <div class="label">🎉 Evento</div>
