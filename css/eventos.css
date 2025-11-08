@@ -82,10 +82,10 @@
   background:#f8fafc;
   border:1px solid #dbeafe;
   color:#0f172a;
-  padding:8px 10px;        /* antes: 10px 12px */
-  border-radius:10px;      /* antes: 12px */
+  padding:10px 12px;        /* antes: 10px 12px */
+  border-radius:12px;      /* antes: 12px */
   font-size:.85rem;        /* um pouco menor */
-  max-width: 260px;        /* limite de largura */
+  max-width: 220px;        /* limite de largura */
   margin: 0 auto;          /* centraliza */
 }
 
@@ -93,7 +93,7 @@
   display:inline-flex;
   align-items:center;
   gap:6px;                 /* antes era 8px */
-  font-weight:700;
+  font-weight:500;
   font-size:.88rem;        /* um pouco menor */
 }
 
