@@ -36,7 +36,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: none; /* carrossel liga a visibilidade */
+  display: none;                   /* carrossel liga a visibilidade */
 }
 
 /* setas do carrossel */
@@ -65,16 +65,32 @@
 }
 .dot.on { background: #0f172a; }
 
-/* conteúdo do card — UM POUCO MAIS COMPACTO */
-.card-body { padding: 14px 14px 16px; display: grid; gap: 8px; }
+/* conteúdo do card */
+.card-body { padding: 16px 16px 18px; display: grid; gap: 10px; }
 .card-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .card-title h3 { margin:0; font-size: 1.05rem; color:#0f172a; }
 
-/* badges de status */
-.badge { padding: 4px 8px; border-radius: 999px; font-size: .75rem; font-weight: 600; }
-.badge.andamento { background: #dcfce7; color:#166534; }
-.badge.proximo   { background: #fef3c7; color:#92400e; }
-.badge.encerrado { background: #e5e7eb; color:#374151; }
+/* ===== badges de status — “ícone + bolha colorida” ===== */
+.badge{
+  display:inline-flex; align-items:center; gap:8px;
+  padding: 4px 10px; border-radius: 999px;
+  font-size:.75rem; font-weight:700; letter-spacing:.1px;
+}
+.badge .b-dot{
+  width:8px; height:8px; border-radius:999px; flex:0 0 8px;
+}
+.badge .b-ic{ font-size:.9rem; line-height:1; }
+.badge .b-txt{ line-height:1; }
+
+/* cores (fundo suave + dot forte) */
+.badge.andamento{ background:#dcfce7; color:#166534; }
+.badge.andamento .b-dot{ background:#16a34a; }
+
+.badge.proximo{ background:#fef3c7; color:#92400e; }
+.badge.proximo .b-dot{ background:#f59e0b; }
+
+.badge.encerrado{ background:#e5e7eb; color:#374151; }
+.badge.encerrado .b-dot{ background:#6b7280; }
 
 /* descrição truncada com botão ler mais */
 .desc { color:#334155; line-height: 1.45; white-space: pre-wrap; }
@@ -89,7 +105,7 @@
 .desc.expanded { -webkit-line-clamp: initial; overflow: visible; }
 .desc.expanded + .read-more { color:#1e40af; }
 
-/* ===== PILLS (Cartinhas / Adoções) — NEUTRO, SEM ROXO ===== */
+/* ===== PILLS (Cartinhas / Adoções) ===== */
 .pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 4px; }
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
@@ -98,23 +114,16 @@
 }
 .pill b { color:#0f172a; font-weight: 700; }
 
-/* ===== Bloco de datas — COMPACTO/DISCRETO ===== */
+/* ===== Bloco de datas ===== */
 .meta {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(3, 1fr); /* início | limite | realização */
+  display: grid; gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
 }
 @media (max-width: 860px){ .meta { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 540px){ .meta { grid-template-columns: 1fr; } }
-
-.meta > div {
-  background:#f8fafc;
-  border-radius: 10px;
-  padding: 6px 8px;                 /* menor */
-  border:1px solid #eef2f7;
-}
-.meta .label { color:#64748b; font-size:.74rem; }   /* menor */
-.meta .value { color:#0f172a; font-weight:600; font-size:.92rem; } /* discreto */
+.meta > div { background:#f8fafc; border-radius: 12px; padding: 8px; border:1px solid #eef2f7; }
+.meta .label { color:#64748b; font-size:.8rem; }
+.meta .value { color:#0f172a; font-weight:600; }
 
 /* local */
 .local { font-size:.9rem; color:#0f172a; }
@@ -122,7 +131,7 @@
 /* estado / mensagens */
 .estado-lista { margin: 8px 0; color:#475569; }
 
-/* lightbox (se estiver usando) */
+/* lightbox */
 #lightbox {
   position: fixed; inset:0; background: rgba(0,0,0,.65);
   display: none; align-items: center; justify-content: center; z-index: 50;
@@ -139,5 +148,3 @@
 }
 #lightbox .lb-prev { left: 24px; }
 #lightbox .lb-next { right: 24px; }
-
-

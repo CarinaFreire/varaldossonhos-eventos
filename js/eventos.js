@@ -4,15 +4,13 @@ const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-// --- AJUSTE: formata sem timezone quando vier "YYYY-MM-DD"
+// — mantém a correção de datas sem -1 dia quando vier 'YYYY-MM-DD'
 function formatDate(d) {
   if (!d) return '-';
-  // se estiver no padrão 'YYYY-MM-DD', não cria Date (evita -1 dia)
   if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
     const [y, m, dd] = d.split('-');
     return `${dd}/${m}/${y}`;
   }
-  // fallback para strings com hora/timezone
   const date = new Date(d);
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -32,9 +30,7 @@ function sortEventos(evts) {
   });
 }
 
-/* =======================
-   Lightbox (montagem preguiçosa)
-   ======================= */
+/* ============= Lightbox (preguiçoso) ============= */
 const lightbox = (() => {
   let box, imgEl, prevBtn, nextBtn, closeBtn;
   let imgs = [], idx = 0;
@@ -43,7 +39,7 @@ const lightbox = (() => {
   function mount() {
     if (mounted) return true;
     box = document.getElementById('lightbox');
-    if (!box) return false; // HTML do lightbox não presente
+    if (!box) return false;
 
     imgEl   = box.querySelector('.lb-img');
     prevBtn = box.querySelector('.lb-prev');
@@ -69,7 +65,6 @@ const lightbox = (() => {
     nextBtn.addEventListener('click', next);
     closeBtn.addEventListener('click', close);
 
-    // expõe funções internas para open()
     lightbox._show = show;
     lightbox._onKey = onKey;
 
@@ -79,7 +74,7 @@ const lightbox = (() => {
 
   return {
     open(list, start = 0) {
-      if (!mount()) return; // se não existir #lightbox no HTML, não faz nada
+      if (!mount()) return;
       imgs = list; idx = start;
       this._show();
       box.classList.add('on');
@@ -89,9 +84,7 @@ const lightbox = (() => {
   };
 })();
 
-/* =======================
-   “Ler mais / Ler menos”
-   ======================= */
+/* ============= “Ler mais / Ler menos” ============= */
 function applyReadMore(descEl) {
   const needs = descEl.scrollHeight > descEl.clientHeight + 2;
   if (!needs) return;
@@ -107,9 +100,26 @@ function applyReadMore(descEl) {
   descEl.after(btn);
 }
 
-/* =======================
-   Carregamento / render
-   ======================= */
+/* ===== helper para montar o BADGE de status ===== */
+function renderStatusBadge(statusRaw = '') {
+  const s = statusRaw.toLowerCase();
+  const map = {
+    'em andamento': { cls: 'andamento', icon: '⏳', label: 'em andamento' },
+    'proximo':       { cls: 'proximo',   icon: '📅', label: 'próximo' },
+    'encerrado':     { cls: 'encerrado', icon: '✔️', label: 'encerrado' },
+  };
+  const cfg = map[s];
+  if (!cfg) return '';
+  return `
+    <span class="badge ${cfg.cls}">
+      <span class="b-dot" aria-hidden="true"></span>
+      <span class="b-ic" aria-hidden="true">${cfg.icon}</span>
+      <span class="b-txt">${cfg.label}</span>
+    </span>
+  `;
+}
+
+/* ============= Carregamento / render ============= */
 async function carregarEventos(status = '') {
   const estadoLista = document.getElementById('estado-lista');
   const grid = document.getElementById('eventos-grid');
@@ -156,7 +166,7 @@ function criarCard(ev) {
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
-  // HEADER (carrossel simples / ou imagem única)
+  /* ----- header (carrossel/única) ----- */
   const media = document.createElement('div');
   media.className = 'card-media';
 
@@ -224,7 +234,7 @@ function criarCard(ev) {
     media.appendChild(img);
   }
 
-  // BODY
+  /* ----- body ----- */
   const body = document.createElement('div');
   body.className = 'card-body';
 
@@ -232,7 +242,7 @@ function criarCard(ev) {
   title.className = 'card-title';
   title.innerHTML = `
     <h3>${ev.nome_evento || ''}</h3>
-    ${ev.status_evento ? `<span class="badge ${ev.status_evento.includes('andamento') ? 'andamento' : ev.status_evento}">${ev.status_evento}</span>` : ''}
+    ${ev.status_evento ? renderStatusBadge(ev.status_evento) : ''}
   `;
 
   const desc = document.createElement('p');
@@ -258,15 +268,15 @@ function criarCard(ev) {
   meta.className = 'meta';
   meta.innerHTML = `
     <div>
-      <div class="label">Início das adoções</div>
+      <div class="label">${labelInicio}</div>
       <div class="value">${formatDate(ev.data_evento)}</div>
     </div>
     <div>
-      <div class="label">Data limite</div>
+      <div class="label">${labelLimite}</div>
       <div class="value">${formatDate(ev.data_limite_recebimento)}</div>
     </div>
     <div>
-      <div class="label">Data do evento</div>
+      <div class="label">${labelRealizacao}</div>
       <div class="value">${formatDate(ev.data_realizacao_evento)}</div>
     </div>
   `;
@@ -293,7 +303,8 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   carregarEventos(v);
 });
 
-/* Boot depois que o DOM existir (inclui #lightbox) */
+/* Boot */
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
+
