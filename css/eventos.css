@@ -25,13 +25,7 @@
 }
 .card:hover { box-shadow: 0 8px 20px rgba(2,6,23,.10); }
 
-.card-media {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16/9;
-  background: #f1f5f9;
-  overflow: hidden;
-}
+.card-media { position: relative; width: 100%; aspect-ratio: 16/9; background: #f1f5f9; overflow: hidden; }
 .card-media .card-img { width:100%; height:100%; object-fit:cover; display:none; }
 
 /* Carrossel */
@@ -76,19 +70,27 @@
 .pill  { display:inline-flex; align-items:center; gap:6px; background:#f8fafc; color:#0f172a; border:1px solid #e2e8f0; padding:4px 8px; border-radius:999px; font-size:.78rem; font-weight:600; }
 .pill b{ color:#0f172a; font-weight:700; }
 
-/* ===== Chips “Adoções / Evento” (texto dentro do chip) ===== */
+/* ===== Chips “Adoções / Evento” (título em cima; linha com datas embaixo) ===== */
 .clean-meta { display:grid; gap:10px; }
 
-/* chip “grande”, com tudo dentro e centralizado */
-.big-chip {
-  display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px;
-  background:#f8fafc; border:1px solid #dbeafe; color:#0f172a;
-  padding:6px 10px; border-radius:12px; font-size:.85rem;
+.big-chip{
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; background:#f8fafc; border:1px solid #dbeafe; color:#0f172a;
+  padding:10px 12px; border-radius:12px; font-size:.9rem;
 }
-.big-chip.center { text-align:center; }
-.chip-title-inline { font-weight:700; color:#0f172a; }
-.chip-item b      { font-weight:600; color:#64748b; }
-.chip-sep         { opacity:.5; }
+
+.chip-title-row{
+  display:inline-flex; align-items:center; gap:8px;
+  font-weight:700; color:#0f172a;
+}
+
+.chip-subrow{
+  display:flex; align-items:center; gap:10px;
+  flex-wrap:wrap; color:#0f172a; font-size:.88rem;
+}
+
+.chip-bar{ color:#94a3b8; }          /* “|” com cor suave */
+.chip-subrow b{ color:#64748b; font-weight:600; }
 
 /* Local */
 .local { font-size:.9rem; color:#0f172a; }
@@ -104,6 +106,3 @@
 #lightbox .lb-nav   { position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:999px; border:0; background:#fff; color:#0f172a; font-size:26px; cursor:pointer; }
 #lightbox .lb-prev  { left:24px; } 
 #lightbox .lb-next  { right:24px; }
-
-
-

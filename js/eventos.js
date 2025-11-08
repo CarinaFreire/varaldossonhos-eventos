@@ -215,7 +215,7 @@ function criarCard(ev) {
     (ev.status_evento || '');
   const statusEmoji =
     ev.status_evento === 'em andamento' ? '⏳' :
-    ev.status_evento === 'próximo' ? '📅' : '🔒';
+    ev.status_evento === 'proximo' ? '📅' : '🔒';
 
   const title = document.createElement('div');
   title.className = 'card-title';
@@ -231,7 +231,7 @@ function criarCard(ev) {
   desc.className = 'desc clamp-3';
   desc.textContent = descricao;
 
-  // Pills (ESQUERDA)
+  // Pills (ESQUERDA, como era antes)
   const pills = document.createElement('div');
   pills.className = 'pills';
   if ((ev.cartinhas_total || 0) > 0) {
@@ -247,24 +247,28 @@ function criarCard(ev) {
     pills.appendChild(p);
   }
 
-  // Chips: "Adoções" (início + limite) e "Evento" (data)
+  // Chips: Adoções (título + linha abaixo) e Evento (título + linha abaixo)
   const meta = document.createElement('div');
   meta.className = 'meta clean-meta';
 
   const adocoesChip = document.createElement('div');
   adocoesChip.className = 'chip big-chip center';
   adocoesChip.innerHTML = `
-    <span class="chip-title-inline">📬 Adoções</span>
-    <span class="chip-item"><b>início:</b> ${formatDateBR(ev.data_evento)}</span>
-    <span class="chip-sep">•</span>
-    <span class="chip-item"><b>limite:</b> ${formatDateBR(ev.data_limite_recebimento)}</span>
+    <div class="chip-title-row">📬 <span>Adoções</span></div>
+    <div class="chip-subrow">
+      <span><b>início:</b> ${formatDateBR(ev.data_evento)}</span>
+      <span class="chip-bar">|</span>
+      <span><b>fim:</b> ${formatDateBR(ev.data_limite_recebimento)}</span>
+    </div>
   `;
 
   const eventoChip = document.createElement('div');
   eventoChip.className = 'chip big-chip center';
   eventoChip.innerHTML = `
-    <span class="chip-title-inline">🎉 Evento</span>
-    <span class="chip-item">${formatDateBR(ev.data_realizacao_evento)}</span>
+    <div class="chip-title-row">🎉 <span>Evento</span></div>
+    <div class="chip-subrow">
+      <span>${formatDateBR(ev.data_realizacao_evento)}</span>
+    </div>
   `;
 
   const local = document.createElement('div');
@@ -295,8 +299,4 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
-
-
-
-
 
