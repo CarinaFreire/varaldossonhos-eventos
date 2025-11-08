@@ -8,7 +8,7 @@
 /* ===== Grid de cards — MAIS RESPIRO ===== */
 .eventos-grid {
   display: grid;
-  gap: 28px;                        /* + espaço entre cartões */
+  gap: 28px;
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 @media (min-width: 720px){ .eventos-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -36,7 +36,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: none;                   /* carrossel liga a visibilidade */
+  display: none; /* carrossel liga a visibilidade */
 }
 
 /* setas do carrossel */
@@ -65,15 +65,13 @@
 }
 .dot.on { background: #0f172a; }
 
-/* conteúdo do card — MAIS RESPIRO */
-.card-body { padding: 16px 16px 18px; display: grid; gap: 10px; }
+/* conteúdo do card — UM POUCO MAIS COMPACTO */
+.card-body { padding: 14px 14px 16px; display: grid; gap: 8px; }
 .card-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .card-title h3 { margin:0; font-size: 1.05rem; color:#0f172a; }
 
 /* badges de status */
-.badge {
-  padding: 4px 8px; border-radius: 999px; font-size: .75rem; font-weight: 600;
-}
+.badge { padding: 4px 8px; border-radius: 999px; font-size: .75rem; font-weight: 600; }
 .badge.andamento { background: #dcfce7; color:#166534; }
 .badge.proximo   { background: #fef3c7; color:#92400e; }
 .badge.encerrado { background: #e5e7eb; color:#374151; }
@@ -99,18 +97,24 @@
   padding: 4px 8px; border-radius: 999px; font-size: .78rem; font-weight: 600;
 }
 .pill b { color:#0f172a; font-weight: 700; }
-.pill button { color: inherit; }          /* se virar botão clicável depois */
 
-/* ===== Bloco de datas ===== */
+/* ===== Bloco de datas — COMPACTO/DISCRETO ===== */
 .meta {
-  display: grid; gap: 10px;
-  grid-template-columns: repeat(3, 1fr);   /* 3 colunas: início, limite, realização */
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, 1fr); /* início | limite | realização */
 }
 @media (max-width: 860px){ .meta { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 540px){ .meta { grid-template-columns: 1fr; } }
-.meta > div { background:#f8fafc; border-radius: 12px; padding: 8px; border:1px solid #eef2f7; }
-.meta .label { color:#64748b; font-size:.8rem; }
-.meta .value { color:#0f172a; font-weight:600; }
+
+.meta > div {
+  background:#f8fafc;
+  border-radius: 10px;
+  padding: 6px 8px;                 /* menor */
+  border:1px solid #eef2f7;
+}
+.meta .label { color:#64748b; font-size:.74rem; }   /* menor */
+.meta .value { color:#0f172a; font-weight:600; font-size:.92rem; } /* discreto */
 
 /* local */
 .local { font-size:.9rem; color:#0f172a; }
@@ -135,4 +139,5 @@
 }
 #lightbox .lb-prev { left: 24px; }
 #lightbox .lb-next { right: 24px; }
+
 
