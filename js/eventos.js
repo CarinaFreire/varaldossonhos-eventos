@@ -165,17 +165,20 @@ function criarCard(ev){
   pillCart.className='pill'+(disponiveis>0 && ev.status_evento!=='encerrado' ? ' clickable':' disabled');
   pillCart.innerHTML=`💌 <span class="k">Cartinhas:</span> <span class="v">${totalCart}</span> <span class="k">( ${disponiveis} disp.)</span>`;
 
-  /* >>> click “Cartinhas”: tenta abrir link oficial; se não houver, modal fallback */
-  if (disponiveis > 0 && ev.status_evento !== 'encerrado') {
-    pillCart.addEventListener('click', () => {
-      const url = ev.cartinhas_url || ev.cartinhas_view_url || ev.link_cartinhas || ev.url_cartinhas;
-      if (url && typeof url === 'string') {
-        window.open(url, '_blank', 'noopener');
-      } else {
-        abrirModalCartinhasFallback(disponiveis);
-      }
-    });
-  }
+  /* >>> click “Cartinhas”: abre as cartinhas ORIGINAIS */
+if (disponiveis > 0 && ev.status_evento !== 'encerrado') {
+  pillCart.addEventListener('click', () => {
+    // se o evento tiver um link próprio, usa; senão abre o Varal padrão
+    const url =
+      ev.cartinhas_url ||
+      ev.cartinhas_view_url ||
+      ev.link_cartinhas ||
+      ev.url_cartinhas ||
+      '/varal'; // <- cartinhas originais
+
+    window.open(url, '_blank', 'noopener');
+  });
+}
 
   const pillAd=document.createElement('span'); pillAd.className='pill';
   pillAd.innerHTML=`🎁 <span class="k">Adoções:</span> <span class="v">${totalAdoc}</span>`;
