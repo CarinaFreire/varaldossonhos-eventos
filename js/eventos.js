@@ -4,9 +4,15 @@ const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
+// --- AJUSTE: formata sem timezone quando vier "YYYY-MM-DD"
 function formatDate(d) {
   if (!d) return '-';
-  // força timezone local (sem -1 dia)
+  // se estiver no padrão 'YYYY-MM-DD', não cria Date (evita -1 dia)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    const [y, m, dd] = d.split('-');
+    return `${dd}/${m}/${y}`;
+  }
+  // fallback para strings com hora/timezone
   const date = new Date(d);
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -291,4 +297,3 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
-
