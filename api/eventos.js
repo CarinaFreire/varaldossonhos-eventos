@@ -95,4 +95,3 @@ export default async function handler(req, res) {
     err(res, 500, "Erro ao listar eventos.", e?.message || e?.toString());
   }
 }
-

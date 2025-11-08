@@ -4,63 +4,49 @@ const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-/* ===== Datas sem timezone ===== */
-
-// Converte 'YYYY-MM-DD' (ou ISO com hora) em 'DD/MM/YYYY' sem criar Date()
 function formatDate(d) {
   if (!d) return '-';
-  const ymd = String(d).slice(0, 10);
-  const [y, m, dd] = ymd.split('-');
-  if (!y || !m || !dd) return '-';
+  // força timezone local (sem -1 dia)
+  const date = new Date(d);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
   return `${dd}/${m}/${y}`;
 }
 
-// Converte 'YYYY-MM-DD' (ou ISO) em número YYYYMMDD para ordenar sem fuso
-function ymdToInt(d) {
-  if (!d) return Infinity;
-  const ymd = String(d).slice(0, 10);
-  const [y, m, dd] = ymd.split('-');
-  if (!y || !m || !dd) return Infinity;
-  return parseInt(`${y}${m}${dd}`, 10);
-}
-
-/* ================================= */
-
 function sortEventos(evts) {
-  return evts.slice().sort((a,b) => {
+  return evts.slice().sort((a, b) => {
     const sa = statusOrder[a.status_evento] ?? 99;
     const sb = statusOrder[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
 
-    // ordena por data_evento sem usar Date()
-    const da = ymdToInt(a.data_evento);
-    const db = ymdToInt(b.data_evento);
+    const da = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
+    const db = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
     return da - db;
   });
 }
 
-// ==== Lightbox simples ====
+/* =======================
+   Lightbox (montagem preguiçosa)
+   ======================= */
 const lightbox = (() => {
-  let box, imgEl, prevBtn, nextBtn, closeBtn, imgs = [], idx = 0;
+  let box, imgEl, prevBtn, nextBtn, closeBtn;
+  let imgs = [], idx = 0;
+  let mounted = false;
 
   function mount() {
+    if (mounted) return true;
     box = document.getElementById('lightbox');
-    imgEl = box.querySelector('.lb-img');
+    if (!box) return false; // HTML do lightbox não presente
+
+    imgEl   = box.querySelector('.lb-img');
     prevBtn = box.querySelector('.lb-prev');
     nextBtn = box.querySelector('.lb-next');
-    closeBtn = box.querySelector('.lb-close');
+    closeBtn= box.querySelector('.lb-close');
 
-    function show() {
-      imgEl.src = imgs[idx].url;
-    }
-    function prev() {
-      idx = (idx - 1 + imgs.length) % imgs.length;
-      show();
-    }
-    function next() {
-      idx = (idx + 1) % imgs.length;
-      show();
-    }
+    function show() { imgEl.src = imgs[idx].url; }
+    function prev() { idx = (idx - 1 + imgs.length) % imgs.length; show(); }
+    function next() { idx = (idx + 1) % imgs.length; show(); }
     function close() {
       box.classList.remove('on');
       box.setAttribute('aria-hidden', 'true');
@@ -72,28 +58,34 @@ const lightbox = (() => {
       if (e.key === 'ArrowRight') next();
     }
 
-    box.addEventListener('click', (e) => {
-      if (e.target === box) close();
-    });
+    box.addEventListener('click', (e) => { if (e.target === box) close(); });
     prevBtn.addEventListener('click', prev);
     nextBtn.addEventListener('click', next);
     closeBtn.addEventListener('click', close);
 
-    return {
-      open(list, start = 0) {
-        imgs = list; idx = start;
-        show();
-        box.classList.add('on');
-        box.setAttribute('aria-hidden', 'false');
-        document.addEventListener('keydown', onKey);
-      }
-    };
+    // expõe funções internas para open()
+    lightbox._show = show;
+    lightbox._onKey = onKey;
+
+    mounted = true;
+    return true;
   }
 
-  return mount();
+  return {
+    open(list, start = 0) {
+      if (!mount()) return; // se não existir #lightbox no HTML, não faz nada
+      imgs = list; idx = start;
+      this._show();
+      box.classList.add('on');
+      box.setAttribute('aria-hidden', 'false');
+      document.addEventListener('keydown', this._onKey);
+    }
+  };
 })();
 
-// === “Ler mais / Ler menos” ===
+/* =======================
+   “Ler mais / Ler menos”
+   ======================= */
 function applyReadMore(descEl) {
   const needs = descEl.scrollHeight > descEl.clientHeight + 2;
   if (!needs) return;
@@ -109,6 +101,9 @@ function applyReadMore(descEl) {
   descEl.after(btn);
 }
 
+/* =======================
+   Carregamento / render
+   ======================= */
 async function carregarEventos(status = '') {
   const estadoLista = document.getElementById('estado-lista');
   const grid = document.getElementById('eventos-grid');
@@ -146,15 +141,16 @@ async function carregarEventos(status = '') {
 function criarCard(ev) {
   const labelInicio = 'Início das adoções';
   const labelLimite = 'Data limite';
+  const labelRealizacao = 'Data do evento';
 
   const descricao = (ev.descricao || '').trim();
-
   const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
   const firstImg = imgs[0]?.url || '';
 
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
+  // HEADER (carrossel simples / ou imagem única)
   const media = document.createElement('div');
   media.className = 'card-media';
 
@@ -182,11 +178,11 @@ function criarCard(ev) {
 
     const prev = document.createElement('button');
     prev.className = 'img-nav prev';
-    prev.setAttribute('aria-label','Imagem anterior');
+    prev.setAttribute('aria-label', 'Imagem anterior');
     prev.textContent = '‹';
     const next = document.createElement('button');
     next.className = 'img-nav next';
-    next.setAttribute('aria-label','Próxima imagem');
+    next.setAttribute('aria-label', 'Próxima imagem');
     next.textContent = '›';
     media.appendChild(prev);
     media.appendChild(next);
@@ -211,16 +207,18 @@ function criarCard(ev) {
     media.addEventListener('mouseenter', stopAuto);
     media.addEventListener('mouseleave', startAuto);
     startAuto();
+
   } else if (firstImg) {
     const img = document.createElement('img');
     img.src = firstImg;
     img.alt = ev.nome_evento || 'Imagem do evento';
     img.className = 'card-img';
     img.style.display = 'block';
-    img.addEventListener('click', () => lightbox.open([{url:firstImg}], 0));
+    img.addEventListener('click', () => lightbox.open([{ url: firstImg }], 0));
     media.appendChild(img);
   }
 
+  // BODY
   const body = document.createElement('div');
   body.className = 'card-body';
 
@@ -228,7 +226,7 @@ function criarCard(ev) {
   title.className = 'card-title';
   title.innerHTML = `
     <h3>${ev.nome_evento || ''}</h3>
-    ${ev.status_evento ? `<span class="badge ${ev.status_evento.includes('andamento')?'andamento':ev.status_evento}">${ev.status_evento}</span>` : ''}
+    ${ev.status_evento ? `<span class="badge ${ev.status_evento.includes('andamento') ? 'andamento' : ev.status_evento}">${ev.status_evento}</span>` : ''}
   `;
 
   const desc = document.createElement('p');
@@ -237,13 +235,13 @@ function criarCard(ev) {
 
   const pills = document.createElement('div');
   pills.className = 'pills';
-  if ((ev.cartinhas_total||0) > 0) {
+  if ((ev.cartinhas_total || 0) > 0) {
     const p = document.createElement('span');
     p.className = 'pill';
     p.innerHTML = `Cartinhas: <b>${ev.cartinhas_total}</b>`;
     pills.appendChild(p);
   }
-  if ((ev.adocoes_total||0) > 0) {
+  if ((ev.adocoes_total || 0) > 0) {
     const p = document.createElement('span');
     p.className = 'pill';
     p.innerHTML = `Adoções: <b>${ev.adocoes_total}</b>`;
@@ -252,16 +250,6 @@ function criarCard(ev) {
 
   const meta = document.createElement('div');
   meta.className = 'meta';
-
-  const extraEvento = ev.data_realizacao_evento
-    ? `
-      <div>
-        <div class="label">Data do evento</div>
-        <div class="value">${formatDate(ev.data_realizacao_evento)}</div>
-      </div>
-    `
-    : '';
-
   meta.innerHTML = `
     <div>
       <div class="label">Início das adoções</div>
@@ -271,7 +259,10 @@ function criarCard(ev) {
       <div class="label">Data limite</div>
       <div class="value">${formatDate(ev.data_limite_recebimento)}</div>
     </div>
-    ${extraEvento}
+    <div>
+      <div class="label">Data do evento</div>
+      <div class="value">${formatDate(ev.data_realizacao_evento)}</div>
+    </div>
   `;
 
   const local = document.createElement('div');
@@ -290,21 +281,14 @@ function criarCard(ev) {
   return wrapper;
 }
 
-// filtro topo
+/* Filtro topo */
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
   const v = (e.target.value || '').toLowerCase();
   carregarEventos(v);
 });
 
-// start
-carregarEventos('');
-
-
-
-
-
-
-
-
-
+/* Boot depois que o DOM existir (inclui #lightbox) */
+document.addEventListener('DOMContentLoaded', () => {
+  carregarEventos('');
+});
 
