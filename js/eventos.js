@@ -1,16 +1,19 @@
-// js/eventos.js
+// =========================
+// Agenda de Eventos (JS)
+// =========================
 
 const API_URL = '/api/eventos';
 
 const statusOrder = { 'em andamento': 0, 'proximo': 1, 'encerrado': 2 };
 
-// ---- datas SEM timezone (YYYY-MM-DD -> DD/MM/YYYY)
-function formatYMD(ymd) {
-  if (!ymd || typeof ymd !== 'string') return '-';
-  const parts = ymd.split('-');
-  if (parts.length !== 3) return ymd;
-  const [y, m, d] = parts;
-  return `${d}/${m}/${y}`;
+// Simple date -> DD/MM/YYYY (datas já vêm corretas do Airtable)
+function formatDate(d) {
+  if (!d) return '-';
+  const date = new Date(d);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${dd}/${m}/${y}`;
 }
 
 function sortEventos(evts) {
@@ -19,46 +22,15 @@ function sortEventos(evts) {
     const sb = statusOrder[b.status_evento] ?? 99;
     if (sa !== sb) return sa - sb;
 
-    const da = a.data_evento || '9999-12-31';
-    const db = b.data_evento || '9999-12-31';
-    return da < db ? -1 : da > db ? 1 : 0;
+    const da = a.data_evento ? new Date(a.data_evento).getTime() : Infinity;
+    const db = b.data_evento ? new Date(b.data_evento).getTime() : Infinity;
+    return da - db;
   });
 }
 
 /* =======================
-   Modal de texto "Ler mais"
-   ======================= */
-(function mountTextModal(){
-  const tpl = document.createElement('div');
-  tpl.id = 'text-modal';
-  tpl.innerHTML = `
-    <div class="tm-backdrop" data-close="1"></div>
-    <div class="tm-dialog" role="dialog" aria-modal="true" aria-label="Texto completo">
-      <button class="tm-close" aria-label="Fechar">×</button>
-      <div class="tm-body"></div>
-    </div>
-  `;
-  document.addEventListener('DOMContentLoaded', () => {
-    document.body.appendChild(tpl);
-    tpl.addEventListener('click', (e) => {
-      if (e.target.dataset.close) closeTextModal();
-    });
-    tpl.querySelector('.tm-close').addEventListener('click', closeTextModal);
-  });
-
-  function closeTextModal() {
-    tpl.classList.remove('on');
-  }
-
-  window.openTextModal = (html) => {
-    tpl.querySelector('.tm-body').innerHTML = html;
-    tpl.classList.add('on');
-  };
-})();
-
-/* =======================
-   Lightbox (imagens)
-   ======================= */
+   Lightbox (lazy mount)
+======================= */
 const lightbox = (() => {
   let box, imgEl, prevBtn, nextBtn, closeBtn;
   let imgs = [], idx = 0, mounted = false;
@@ -73,21 +45,21 @@ const lightbox = (() => {
     nextBtn = box.querySelector('.lb-next');
     closeBtn= box.querySelector('.lb-close');
 
-    function show() { imgEl.src = imgs[idx].url; }
-    function prev() { idx = (idx - 1 + imgs.length) % imgs.length; show(); }
-    function next() { idx = (idx + 1) % imgs.length; show(); }
-    function close() {
+    function show(){ imgEl.src = imgs[idx].url; }
+    function prev(){ idx = (idx - 1 + imgs.length) % imgs.length; show(); }
+    function next(){ idx = (idx + 1) % imgs.length; show(); }
+    function close(){
       box.classList.remove('on');
-      box.setAttribute('aria-hidden', 'true');
+      box.setAttribute('aria-hidden','true');
       document.removeEventListener('keydown', onKey);
     }
-    function onKey(e) {
+    function onKey(e){
       if (e.key === 'Escape') close();
       if (e.key === 'ArrowLeft') prev();
       if (e.key === 'ArrowRight') next();
     }
 
-    box.addEventListener('click', (e) => { if (e.target === box) close(); });
+    box.addEventListener('click', e => { if (e.target === box) close(); });
     prevBtn.addEventListener('click', prev);
     nextBtn.addEventListener('click', next);
     closeBtn.addEventListener('click', close);
@@ -99,20 +71,48 @@ const lightbox = (() => {
   }
 
   return {
-    open(list, start = 0) {
+    open(list, start = 0){
       if (!mount()) return;
       imgs = list; idx = start;
       this._show();
       box.classList.add('on');
-      box.setAttribute('aria-hidden', 'false');
+      box.setAttribute('aria-hidden','false');
       document.addEventListener('keydown', this._onKey);
     }
   };
 })();
 
 /* =======================
-   Carregar / Renderizar
-   ======================= */
+   Modal "Ler mais"
+======================= */
+function openDescModal(text) {
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop';
+  backdrop.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Descrição do evento">
+      <header>
+        <h3>Descrição do evento</h3>
+        <button class="close" aria-label="Fechar">✕</button>
+      </header>
+      <div class="body">${(text || '').replace(/\n/g,'<br/>')}</div>
+    </div>
+  `;
+  document.body.appendChild(backdrop);
+
+  function close(){
+    backdrop.remove();
+    document.removeEventListener('keydown', onKey);
+  }
+  function onKey(e){ if (e.key === 'Escape') close(); }
+
+  backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
+  backdrop.querySelector('.close').addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+}
+
+/* =======================
+   Fetch & render
+======================= */
 async function carregarEventos(status = '') {
   const estadoLista = document.getElementById('estado-lista');
   const grid = document.getElementById('eventos-grid');
@@ -137,43 +137,31 @@ async function carregarEventos(status = '') {
     for (const ev of eventos) grid.appendChild(criarCard(ev));
     estadoLista.textContent = '';
   } catch (e) {
-    estadoLista.textContent = 'Erro ao carregar eventos.';
     console.error(e);
+    estadoLista.textContent = 'Erro ao carregar eventos.';
   } finally {
-    document.getElementById('eventos-grid').removeAttribute('aria-busy');
+    grid.removeAttribute('aria-busy');
   }
 }
 
-/* =======================
-   Helpers de UI
-   ======================= */
-function statusBadge(statusRaw) {
-  const s = (statusRaw || '').toLowerCase();
-  let cls = '', emoji = '', text = s;
-  if (s === 'em andamento') { cls = 'andamento'; emoji = '⏳'; text = 'em andamento'; }
-  else if (s === 'proximo') { cls = 'proximo'; emoji = '📅'; text = 'proximo'; }
-  else if (s === 'encerrado') { cls = 'encerrado'; emoji = '🔒'; text = 'encerrado'; }
-  return `<span class="status-badge ${cls}"><span class="emoji">${emoji}</span>${text}</span>`;
+/* Badge de status com emoji + classe de cor */
+function statusBadgeHTML(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'em andamento') return `<span class="status-badge status--andamento">⏳ <span>em andamento</span></span>`;
+  if (s === 'proximo')       return `<span class="status-badge status--proximo">📅 <span>próximo</span></span>`;
+  if (s === 'encerrado')     return `<span class="status-badge status--encerrado">🔒 <span>encerrado</span></span>`;
+  return '';
 }
 
-function applyReadMore(btn, descText) {
-  btn.addEventListener('click', () => {
-    const html = `<div class="tm-title">Descrição do evento</div><div class="tm-text">${descText
-      .replace(/\n/g, '<br>')}</div>`;
-    window.openTextModal(html);
-  });
-}
-
-/* =======================
-   Card
-   ======================= */
+/* Criação de cada card */
 function criarCard(ev) {
   const wrapper = document.createElement('article');
   wrapper.className = 'card';
 
-  // HEADER (imagem / carrossel simples)
+  /* media */
   const media = document.createElement('div');
   media.className = 'card-media';
+
   const imgs = Array.isArray(ev.imagem) ? ev.imagem : [];
   if (imgs.length) {
     imgs.forEach((im, i) => {
@@ -186,6 +174,7 @@ function criarCard(ev) {
       media.appendChild(img);
     });
 
+    // dots
     const dots = document.createElement('div');
     dots.className = 'dots';
     imgs.forEach((_, i) => {
@@ -197,31 +186,33 @@ function criarCard(ev) {
     });
     media.appendChild(dots);
 
+    // arrows
     const prev = document.createElement('button');
     prev.className = 'img-nav prev';
-    prev.setAttribute('aria-label', 'Imagem anterior');
+    prev.setAttribute('aria-label','Imagem anterior');
     prev.textContent = '‹';
+
     const next = document.createElement('button');
     next.className = 'img-nav next';
-    next.setAttribute('aria-label', 'Próxima imagem');
+    next.setAttribute('aria-label','Próxima imagem');
     next.textContent = '›';
-    media.appendChild(prev);
-    media.appendChild(next);
+
+    media.appendChild(prev); media.appendChild(next);
 
     let idx = 0, auto;
-    function show(n) {
+    function show(n){
       const imgsEls = media.querySelectorAll('.card-img');
       const dotsEls = media.querySelectorAll('.dot');
-      imgsEls.forEach((el, i) => el.style.display = i === n ? 'block' : 'none');
-      dotsEls.forEach((el, i) => el.classList.toggle('on', i === n));
+      imgsEls.forEach((el,i)=> el.style.display = i===n ? 'block' : 'none');
+      dotsEls.forEach((el,i)=> el.classList.toggle('on', i===n));
       idx = n;
     }
-    function setSlide(n) { show(n); restartAuto(); }
-    function prevSlide() { setSlide((idx - 1 + imgs.length) % imgs.length); }
-    function nextSlide() { setSlide((idx + 1) % imgs.length); }
-    function startAuto() { auto = setInterval(nextSlide, 4000); }
-    function stopAuto() { clearInterval(auto); }
-    function restartAuto() { stopAuto(); startAuto(); }
+    function setSlide(n){ show(n); restartAuto(); }
+    function prevSlide(){ setSlide((idx - 1 + imgs.length) % imgs.length); }
+    function nextSlide(){ setSlide((idx + 1) % imgs.length); }
+    function startAuto(){ auto = setInterval(nextSlide, 4000); }
+    function stopAuto(){ clearInterval(auto); }
+    function restartAuto(){ stopAuto(); startAuto(); }
 
     prev.addEventListener('click', prevSlide);
     next.addEventListener('click', nextSlide);
@@ -230,7 +221,7 @@ function criarCard(ev) {
     startAuto();
   }
 
-  // BODY
+  /* body */
   const body = document.createElement('div');
   body.className = 'card-body';
 
@@ -238,71 +229,73 @@ function criarCard(ev) {
   title.className = 'card-title';
   title.innerHTML = `
     <h3>${ev.nome_evento || ''}</h3>
-    ${statusBadge(ev.status_evento)}
+    ${statusBadgeHTML(ev.status_evento)}
   `;
 
   const desc = document.createElement('p');
   desc.className = 'desc clamp-3';
   desc.textContent = (ev.descricao || '').trim();
 
-  const btnLM = document.createElement('button');
-  btnLM.className = 'read-more';
-  btnLM.type = 'button';
-  btnLM.textContent = 'Ler mais';
-  applyReadMore(btnLM, (ev.descricao || '').trim());
+  const readMore = document.createElement('button');
+  readMore.className = 'read-more';
+  readMore.textContent = 'Ler mais';
+  readMore.addEventListener('click', () => openDescModal(desc.textContent));
 
-  // Pills de contadores (como estavam)
-  const pills = document.createElement('div');
-  pills.className = 'pills';
-  if ((ev.cartinhas_total || 0) > 0) {
-    const p = document.createElement('span');
-    p.className = 'pill';
-    p.innerHTML = `Cartinhas: <b>${ev.cartinhas_total}</b>`;
-    pills.appendChild(p);
-  }
-  if ((ev.adocoes_total || 0) > 0) {
-    const p = document.createElement('span');
-    p.className = 'pill';
-    p.innerHTML = `Adoções: <b>${ev.adocoes_total}</b>`;
-    pills.appendChild(p);
-  }
+  /* contadores (mantidos como antes) */
+  const counts = document.createElement('div');
+  counts.className = 'counts';
+  const c1 = document.createElement('span');
+  c1.className = 'count-pill';
+  c1.textContent = `Cartinhas: ${ev.cartinhas_total ?? 0}`;
+  const c2 = document.createElement('span');
+  c2.className = 'count-pill';
+  c2.textContent = `Adoções: ${ev.adocoes_total ?? 0}`;
+  counts.appendChild(c1); counts.appendChild(c2);
 
-  // ======= CHIP ADOÇÕES =======
+  /* chips */
+  const chips = document.createElement('div');
+  chips.className = 'chips';
+
+  // Adoções: título central + linha "início | fim"
   const chipA = document.createElement('div');
-  chipA.className = 'chip chip-ado';
+  chipA.className = 'chip';
   chipA.innerHTML = `
     <div class="chip-title">📬 <span>Adoções</span></div>
-    <div class="chip-row">
-      <span><b>início:</b> ${formatYMD(ev.data_evento)}</span>
+    <div class="chip-kv">
+      <span class="label">início:</span><span class="value">${formatDate(ev.data_evento)}</span>
       <span class="sep">|</span>
-      <span><b>fim:</b> ${formatYMD(ev.data_limite_recebimento)}</span>
+      <span class="label">fim:</span><span class="value">${formatDate(ev.data_limite_recebimento)}</span>
     </div>
   `;
 
-  // ======= BLOCO EVENTO =======
-  const chipE = document.createElement('div');
-  chipE.className = 'chip chip-evento';
-  chipE.innerHTML = `
+  // Evento: título central + "Data: ..."
+  const chipE = div('chip', `
     <div class="chip-title">🎉 <span>Evento</span></div>
-    <div class="chip-line"><b>Data:</b> ${formatYMD(ev.data_realizacao_evento)}</div>
-  `;
+    <div class="chip-date"><span class="label">Data:</span><span class="value">${formatDate(ev.data_realizacao_evento)}</span></div>
+  `);
 
+  chips.appendChild(chipA);
+  chips.appendChild(chipE);
+
+  /* local */
   const local = document.createElement('div');
   local.className = 'local';
   local.innerHTML = `<b>Local:</b> ${ev.local_evento || '-'}`;
 
   body.appendChild(title);
   body.appendChild(desc);
-  body.appendChild(btnLM);
-  if (pills.childElementCount) body.appendChild(pills);
-  body.appendChild(chipA);
-  body.appendChild(chipE);
+  if (desc.textContent.length > 120) body.appendChild(readMore);
+  body.appendChild(counts);
+  body.appendChild(chips);
   body.appendChild(local);
 
   wrapper.appendChild(media);
   wrapper.appendChild(body);
   return wrapper;
 }
+
+/* helper */
+function div(cls, html){ const d=document.createElement('div'); d.className=cls; d.innerHTML=html; return d; }
 
 /* Filtro topo */
 document.getElementById('filtro-status')?.addEventListener('change', (e) => {
@@ -314,6 +307,7 @@ document.getElementById('filtro-status')?.addEventListener('change', (e) => {
 document.addEventListener('DOMContentLoaded', () => {
   carregarEventos('');
 });
+
 
 
 
