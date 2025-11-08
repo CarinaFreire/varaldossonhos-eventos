@@ -71,18 +71,43 @@
 }
 .pill .k { color:#64748b; font-weight:600; }
 .pill .v { color:#0f172a; }
-.pill.clickable { cursor:pointer; transition: background .15s, border-color .15s; }
-.pill.clickable:hover { background:#eef2f7; border-color:#cbd5e1; }
+.pill.clickable { cursor:pointer; transition: background .15s, border-color .15s, transform .12s ease; }
+.pill.clickable:hover { background:#eef2f7; border-color:#cbd5e1; transform: translateY(-1px); }
 .pill.disabled { opacity:.55; cursor:not-allowed; }
 
+/* >>> Botão de Cartinhas — MAIS CHAMATIVO */
+.pill-cartinhas {
+  background: linear-gradient(0deg,#eef6ff,#f5f9ff);
+  border-color:#93c5fd !important;
+  box-shadow: inset 0 0 0 1px #bfdbfe, 0 3px 10px rgba(59,130,246,.18);
+  color:#0f172a;
+}
+.pill-cartinhas .k, .pill-cartinhas .v { color:#0f172a; }
+.pill-cartinhas:hover {
+  background: #e8f2ff;
+  border-color:#60a5fa !important;
+  box-shadow: inset 0 0 0 1px #93c5fd, 0 5px 16px rgba(59,130,246,.25);
+  transform: translateY(-2px);
+}
+.pill-cartinhas:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+
 /* ===== Chips “Adoções” e “Evento” — mais compactos ===== */
-.info-cards { display:grid; gap:8px; }
+.info-cards { display:grid; gap:6px; }
 .info-chip {
   border:1px solid #cfe3ff; background:#f7fbff; color:#0f172a;
-  border-radius:10px; padding:8px 10px;
+  border-radius:10px; padding:6px 8px;            /* ↓ menor */
 }
-.info-chip .chip-title { text-align:center; font-weight:800; margin-bottom:4px; font-size:.92rem; }
-.info-chip .row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; font-size:.9rem; }
+.info-chip .chip-title {
+  text-align:center; font-weight:800;
+  margin-bottom:3px; font-size:.86rem;           /* ↓ menor */
+}
+.info-chip .row {
+  display:flex; gap:8px; flex-wrap:wrap;
+  justify-content:center; font-size:.82rem;      /* ↓ menor */
+}
 .info-chip .row .label { color:#64748b; font-weight:700; }
 .info-chip .row .date  { font-weight:800; color:#0f172a; }
 
