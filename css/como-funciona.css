@@ -18,7 +18,7 @@ PÁGINA: COMO FUNCIONA
 /* Título e subtítulo */
 .cf-title {
   font-size: 2rem;
-  color: #5b8ef1; /* tom igual ao da Agenda de Eventos */
+  color: #5b8ef1; 
   margin: 6px 0 6px;
   font-weight: 700;
 }
