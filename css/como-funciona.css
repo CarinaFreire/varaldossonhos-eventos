@@ -1,6 +1,5 @@
 /* ============================================================
-🎈 PÁGINA: COMO FUNCIONA
-Estilo limpo, fluido e harmônico com o restante do site
+PÁGINA: COMO FUNCIONA
 ============================================================ */
 
 /* Seção principal */
@@ -14,11 +13,6 @@ Estilo limpo, fluido e harmônico com o restante do site
   max-width: 80%;
   margin: 0 auto 10px;
   display: block;
-  width: 350px;
-  animation: flutuar 2s ease-in-out infinite;
-  transition: transform 0.3s ease, filter 0.3s ease;
-  filter: drop-shadow(0 6px 10px rgba(74, 144, 226, 0.25));
-  margin: 0 auto 8px;
 }
 
 /* Título e subtítulo */
