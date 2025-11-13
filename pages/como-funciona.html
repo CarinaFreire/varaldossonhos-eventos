@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Como Funciona • Fantástica Fábrica de Sonhos</title>
 
-  <!-- Seus estilos globais -->
+  <!-- CSS global -->
   <link rel="stylesheet" href="../css/eventos.css" />
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/cloudinho.css" />
   <link rel="icon" href="../imagens/favicon.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Estilos específicos da página (clean/fluido) -->
+  <!-- Estilo específico da página -->
   <style>
-    /* ===== COMO FUNCIONA ===== */
+    /* ===== COMO FUNCIONA - VERSÃO CLEAN ===== */
     .como-funciona-content { text-align:center; }
     .cf-hero-img { width: 300px; max-width: 80%; margin: 0 auto 10px; display:block; }
     .cf-title { font-size: 2rem; color: #5b8ef1; margin: 6px 0 6px; }
@@ -39,7 +39,7 @@
     }
     .cf-step:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08); }
     .cf-icon {
-      background: #3b82f6;
+      background: #5b8ef1;
       color: #fff;
       border-radius: 50%;
       width: 36px; height: 36px;
@@ -58,24 +58,35 @@
       margin: 0 auto 26px;
       text-align: left;
     }
-    .cf-observacoes h3 { color: #3b82f6; margin: 0 0 10px; font-size: 1.15rem; text-align:center; }
+    .cf-observacoes h3 { color: #5b8ef1; margin: 0 0 10px; font-size: 1.15rem; text-align:center; }
     .cf-observacoes ul { list-style: none; padding: 0; margin: 0 0 18px; }
     .cf-observacoes li { color: #334155; font-size: .95rem; margin-bottom: 6px; }
 
     .cf-btn {
       display: inline-block;
-      background: #3b82f6;
+      background: #5b8ef1;
       color: #fff;
-      padding: 10px 24px;
+      padding: 12px 32px;
       border-radius: 999px;
       text-decoration: none;
       font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 8px 16px rgba(91, 142, 241, 0.25);
       transition: background .2s ease, transform .1s ease;
-      text-align:center;
+      text-align: center;
+      margin: 0 auto;
     }
-    .cf-btn:hover { background: #2563eb; transform: translateY(-1px); }
+    .cf-btn:hover {
+      background: #4a7de4;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(91, 142, 241, 0.35);
+    }
 
-    /* container padrão da sua base */
+    .cf-btn-wrap {
+      text-align: center;
+      margin-top: 16px;
+    }
+
     .container { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
   </style>
 </head>
@@ -99,8 +110,7 @@
 
         <div class="cf-step">
           <span class="cf-icon">💌</span>
-          <p><strong>Entre no Varal Virtual:</strong> clique em <b>“Quero Adotar um Sonho”</b> ou acesse o menu <b>Varal Virtual</b>.
-          Lá estão as cartinhas escritas pelas crianças contando seus sonhos.</p>
+          <p><strong>Entre no Varal Virtual:</strong> clique em <b>“Quero Adotar um Sonho”</b> ou acesse o menu <b>Varal Virtual</b>. Lá estão as cartinhas escritas pelas crianças contando seus sonhos.</p>
         </div>
 
         <div class="cf-step">
@@ -110,12 +120,12 @@
 
         <div class="cf-step">
           <span class="cf-icon">📍</span>
-          <p><strong>Confirme o ponto de coleta:</strong> sua cartinha irá para o <b>Carrinho de Adoção</b>.<p> Escolha onde deseja entregar o presente e confirme.</p>
+          <p><strong>Confirme o ponto de coleta:</strong> sua cartinha irá para o <b>Carrinho de Adoção</b>. Escolha onde deseja entregar o presente e confirme.</p>
         </div>
 
         <div class="cf-step">
           <span class="cf-icon">📩</span>
-          <p><strong>Aguarde nossa confirmação:</strong> nossa equipe revisará seu pedido e enviará um <b>e-mail de confirmação</b>. <p>Após isso, você estará autorizado(a) a comprar o presente.</p>
+          <p><strong>Aguarde nossa confirmação:</strong> nossa equipe revisará seu pedido e enviará um <b>e-mail de confirmação</b>. Após isso, você estará autorizado(a) a comprar o presente.</p>
         </div>
 
         <div class="cf-step">
@@ -125,7 +135,7 @@
 
         <div class="cf-step">
           <span class="cf-icon">🚚</span>
-          <p><strong>Entregue no ponto de coleta:</strong> leve o presente até o ponto escolhido antes da <b>data limite</b>. <p>Não perca o prazo, as crianças aguardam com carinho!</p>
+          <p><strong>Entregue no ponto de coleta:</strong> leve o presente até o ponto escolhido antes da <b>data limite</b>. Não perca o prazo — as crianças aguardam com carinho!</p>
         </div>
 
         <div class="cf-step">
@@ -139,11 +149,13 @@
         <ul>
           <li>🎁 Presentes devem ser <b>novos</b> e adequados à faixa etária informada.</li>
           <li>🔒 Evite incluir <b>informações pessoais</b> dentro do pacote.</li>
-          <li>📦 Não pode ir ao evento? Tudo bem, é só entregar no <b>ponto de coleta escolhido</b>.</li>
+          <li>📦 Não pode ir ao evento? Entregue no <b>ponto de coleta</b>.</li>
           <li>☁️ Dúvidas? Fale com o <b>Cloudinho</b> ou envie um e-mail para <b>varaldossonhossp@gmail.com</b>.</li>
         </ul>
 
-        <a href="cartinha.html" class="cf-title">💙 Quero adotar um sonho</a>
+        <div class="cf-btn-wrap">
+          <a href="cartinha.html" class="cf-btn">💙 Quero adotar um sonho</a>
+        </div>
       </div>
     </section>
   </main>
