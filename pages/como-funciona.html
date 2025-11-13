@@ -5,296 +5,145 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Como Funciona • Fantástica Fábrica de Sonhos</title>
 
-  <!-- CSS principal do site -->
+  <!-- Seus estilos globais -->
   <link rel="stylesheet" href="../css/eventos.css" />
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/cloudinho.css" />
   <link rel="icon" href="../imagens/favicon.png" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Estilos específicos da página "Como Funciona" -->
+  <!-- Estilos específicos da página (clean/fluido) -->
   <style>
-    .como-funciona-page {
-      margin-top: 110px;
-      margin-bottom: 48px;
-    }
+    /* ===== COMO FUNCIONA - VERSÃO CLEAN ===== */
+    .como-funciona-content { text-align:center; }
+    .cf-hero-img { width: 300px; max-width: 80%; margin: 0 auto 10px; display:block; }
+    .cf-title { font-size: 2rem; color: #5b8ef1; margin: 6px 0 6px; }
+    .cf-sub { color: #475569; font-size: 1rem; margin: 0 0 28px; }
 
-    .cf-hero {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .cf-hero img {
-      max-width: 260px;
-      height: auto;
-      display: block;
-      margin: 0 auto 12px;
-    }
-
-    .cf-hero h1 {
-      font-size: 1.9rem;
-      margin: 0 0 6px;
-      color: #0f172a;
-    }
-
-    .cf-hero p {
-      margin: 0;
-      color: #475569;
-      font-size: 0.98rem;
-    }
-
-    .cf-layout {
-      display: grid;
-      gap: 24px;
-    }
-
-    @media (min-width: 900px) {
-      .cf-layout {
-        grid-template-columns: 3fr 2fr;
-        align-items: flex-start;
-      }
-    }
-
-    /* Lista de passos */
     .cf-steps {
-      list-style: none;
-      padding: 0;
-      margin: 0;
       display: grid;
-      gap: 14px;
+      gap: 18px;
+      max-width: 720px;
+      margin: 0 auto 40px;
     }
-
-    .cf-step-card {
-      background: #ffffff;
-      border-radius: 16px;
-      border: 1px solid #e2e8f0;
-      padding: 14px 16px;
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 10px 14px;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
-    }
-
-    .cf-step-number {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: #2563eb;
-      color: #ffffff;
-      font-weight: 700;
-      font-size: 0.9rem;
+    .cf-step {
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid #dbeafe;
+      border-radius: 14px;
+      padding: 14px 18px;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 2px;
-    }
-
-    .cf-step-body h3 {
-      margin: 0 0 4px;
-      font-size: 1rem;
-      color: #0f172a;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .cf-step-body p {
-      margin: 0;
-      font-size: 0.92rem;
-      color: #475569;
-      line-height: 1.5;
-    }
-
-    /* Bloco lateral: Observações */
-    .cf-side-card {
-      background: #ffffff;
-      border-radius: 18px;
-      border: 1px solid #e0ecff;
-      padding: 18px 18px 20px;
-      box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
-    }
-
-    .cf-side-card h2 {
-      margin: 0 0 10px;
-      font-size: 1.15rem;
-      color: #0f172a;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .cf-side-card ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: grid;
-      gap: 8px;
-    }
-
-    .cf-side-card li {
-      font-size: 0.9rem;
-      color: #475569;
-      display: flex;
-      gap: 8px;
       align-items: flex-start;
+      gap: 14px;
+      text-align: left;
+      transition: transform .2s ease, box-shadow .2s ease;
     }
-
-    .cf-side-card li span.icon {
-      margin-top: 2px;
+    .cf-step:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08); }
+    .cf-icon {
+      background: #3b82f6;
+      color: #fff;
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex: 0 0 36px;
     }
+    .cf-step p { margin: 0; font-size: .95rem; color: #334155; line-height: 1.5; }
+    .cf-step strong { color: #0f172a; }
 
-    .cf-cta {
-      margin-top: 22px;
-      text-align: center;
+    .cf-observacoes {
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 760px;
+      margin: 0 auto 26px;
+      text-align: left;
     }
+    .cf-observacoes h3 { color: #3b82f6; margin: 0 0 10px; font-size: 1.15rem; text-align:center; }
+    .cf-observacoes ul { list-style: none; padding: 0; margin: 0 0 18px; }
+    .cf-observacoes li { color: #334155; font-size: .95rem; margin-bottom: 6px; }
 
-    .cf-cta p {
-      margin: 0 0 10px;
-      font-size: 0.96rem;
-      color: #475569;
-    }
-
-    .cf-cta a.cf-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 10px 20px;
+    .cf-btn {
+      display: inline-block;
+      background: #3b82f6;
+      color: #fff;
+      padding: 10px 24px;
       border-radius: 999px;
-      border: none;
-      background: #2563eb;
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 0.95rem;
       text-decoration: none;
-      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
-      cursor: pointer;
+      font-weight: 600;
+      transition: background .2s ease, transform .1s ease;
+      text-align:center;
     }
+    .cf-btn:hover { background: #2563eb; transform: translateY(-1px); }
 
-    .cf-cta a.cf-btn:hover {
-      background: #1d4ed8;
-    }
-
-    .cf-cta small {
-      display: block;
-      margin-top: 6px;
-      color: #64748b;
-      font-size: 0.8rem;
-    }
+    /* container padrão da sua base */
+    .container { max-width: 1120px; margin: 0 auto; padding: 24px 16px; }
   </style>
 </head>
 
 <body>
   <div id="header" role="banner"></div>
 
-  <main class="container como-funciona-page" role="main">
+  <main class="container" role="main" style="margin-top: 100px;">
     <section class="como-funciona-content">
-      <!-- HERO -->
       <div class="cf-hero">
-        <img src="../imagens/nuvem.png" alt="Fantástica Fábrica de Sonhos" />
-        <h1>Como funciona para adotar um sonho 💙</h1>
-        <p>Veja o passo a passo para escolher uma cartinha e fazer parte da Fantástica Fábrica de Sonhos.</p>
+        <img src="../imagens/nuvem.png" alt="Fantástica Fábrica de Sonhos" class="cf-hero-img" />
+        <h1 class="cf-title">Como funciona para adotar um sonho 💙</h1>
+        <p class="cf-sub">Veja como é simples fazer parte dessa corrente do bem e realizar o sonho de uma criança ✨</p>
       </div>
 
-      <!-- CONTEÚDO PRINCIPAL -->
-      <div class="cf-layout">
-        <!-- PASSOS -->
-        <ol class="cf-steps">
-          <li class="cf-step-card">
-            <div class="cf-step-number">1</div>
-            <div class="cf-step-body">
-              <h3>Faça seu cadastro ✍️</h3>
-              <p>Acesse a página <strong>Cadastro</strong> e preencha suas informações. Assim você poderá visualizar todas as <strong>cartinhas disponíveis</strong> no Varal Virtual.</p>
-            </div>
-          </li>
+      <div class="cf-steps">
+        <div class="cf-step">
+          <span class="cf-icon">✍️</span>
+          <p><strong>Faça seu cadastro:</strong> acesse a página <b>Cadastro</b> e preencha suas informações. Assim você poderá visualizar todas as <b>cartinhas disponíveis</b> no Varal Virtual.</p>
+        </div>
 
-          <li class="cf-step-card">
-            <div class="cf-step-number">2</div>
-            <div class="cf-step-body">
-              <h3>Entre no Varal Virtual 💌</h3>
-              <p>Depois de se cadastrar, na página inicial clique em <strong>“Quero Adotar um Sonho”</strong> ou no menu <strong>Varal Virtual</strong>. Lá estão as cartinhas escritas pelas crianças contando seus sonhos.</p>
-            </div>
-          </li>
+        <div class="cf-step">
+          <span class="cf-icon">💌</span>
+          <p><strong>Entre no Varal Virtual:</strong> clique em <b>“Quero Adotar um Sonho”</b> ou acesse o menu <b>Varal Virtual</b>. Lá estão as cartinhas escritas pelas crianças contando seus sonhos.</p>
+        </div>
 
-          <li class="cf-step-card">
-            <div class="cf-step-number">3</div>
-            <div class="cf-step-body">
-              <h3>Escolha uma cartinha 🌈</h3>
-              <p>Leia com carinho e, quando encontrar um sonho que tocar seu coração, clique em <strong>Adotar</strong>.</p>
-            </div>
-          </li>
+        <div class="cf-step">
+          <span class="cf-icon">🌈</span>
+          <p><strong>Escolha uma cartinha:</strong> leia com carinho e, quando encontrar um sonho que tocar seu coração, clique em <b>Adotar</b>.</p>
+        </div>
 
-          <li class="cf-step-card">
-            <div class="cf-step-number">4</div>
-            <div class="cf-step-body">
-              <h3>Confirme seu ponto de coleta 📍</h3>
-              <p>Sua cartinha irá para o <strong>Carrinho de Adoção</strong>. Escolha o <strong>ponto de coleta</strong> onde deseja entregar o presente e confirme sua adoção.</p>
-            </div>
-          </li>
+        <div class="cf-step">
+          <span class="cf-icon">📍</span>
+          <p><strong>Confirme o ponto de coleta:</strong> sua cartinha irá para o <b>Carrinho de Adoção</b>. Escolha onde deseja entregar o presente e confirme.</p>
+        </div>
 
-          <li class="cf-step-card">
-            <div class="cf-step-number">5</div>
-            <div class="cf-step-body">
-              <h3>Aguarde nossa confirmação 📩</h3>
-              <p>Nossa equipe vai revisar seu pedido e enviar um <strong>e-mail de confirmação</strong>. Só depois dessa confirmação você estará autorizado(a) a comprar o presente.</p>
-            </div>
-          </li>
+        <div class="cf-step">
+          <span class="cf-icon">📩</span>
+          <p><strong>Aguarde nossa confirmação:</strong> nossa equipe revisará seu pedido e enviará um <b>e-mail de confirmação</b>. Após isso, você estará autorizado(a) a comprar o presente.</p>
+        </div>
 
-          <li class="cf-step-card">
-            <div class="cf-step-number">6</div>
-            <div class="cf-step-body">
-              <h3>Compre o presente com amor 🎁</h3>
-              <p>Escolha um <strong>presente novo</strong>, dentro da faixa etária da criança, de acordo com o que está escrito na cartinha.</p>
-            </div>
-          </li>
+        <div class="cf-step">
+          <span class="cf-icon">🎁</span>
+          <p><strong>Compre o presente com amor:</strong> escolha um <b>presente novo</b>, de acordo com o que a criança escreveu na cartinha. 💙</p>
+        </div>
 
-          <li class="cf-step-card">
-            <div class="cf-step-number">7</div>
-            <div class="cf-step-body">
-              <h3>Entregue no ponto de coleta ⏰</h3>
-              <p>Leve o presente até o <strong>ponto de coleta escolhido</strong> antes da <strong>data limite</strong>. Não perca o prazo, hein? Nossas crianças aguardam ansiosas pelo seu carinho 💙.</p>
-            </div>
-          </li>
+        <div class="cf-step">
+          <span class="cf-icon">🚚</span>
+          <p><strong>Entregue no ponto de coleta:</strong> leve o presente até o ponto escolhido antes da <b>data limite</b>. Não perca o prazo — as crianças aguardam com carinho!</p>
+        </div>
 
-          <li class="cf-step-card">
-            <div class="cf-step-number">8</div>
-            <div class="cf-step-body">
-              <h3>Acompanhe a Agenda de Eventos 📅</h3>
-              <p>Na página <strong>Agenda de Eventos</strong> você acompanha tudo que já aconteceu, o que está em andamento e os próximos eventos da Fantástica Fábrica de Sonhos.</p>
-            </div>
-          </li>
-        </ol>
+        <div class="cf-step">
+          <span class="cf-icon">📅</span>
+          <p><strong>Acompanhe a Agenda de Eventos:</strong> veja tudo o que já aconteceu, o que está em andamento e os próximos eventos que estão por vir.</p>
+        </div>
+      </div>
 
-        <!-- LATERAL: OBSERVAÇÕES E CTA -->
-        <aside class="cf-side-card">
-          <h2>💡 Observações importantes</h2>
-          <ul>
-            <li>
-              <span class="icon">🎁</span>
-              <span>Os presentes devem ser <strong>novos</strong> e adequados à faixa etária informada.</span>
-            </li>
-            <li>
-              <span class="icon">🔒</span>
-              <span>Evite colocar <strong>informações pessoais</strong> dentro do pacote ou na embalagem.</span>
-            </li>
-            <li>
-              <span class="icon">📦</span>
-              <span>Não pode ir ao evento? Tudo bem! Entregue o presente no <strong>ponto de coleta</strong> escolhido.</span>
-            </li>
-            <li>
-              <span class="icon">☁️</span>
-              <span>Dúvidas? Fale com o mascote <strong>Cloudinho</strong> ou entre em contato pelo e-mail: <br /><strong>varaldossonhossp@gmail.com</strong></span>
-            </li>
-          </ul>
+      <div class="cf-observacoes">
+        <h3>💡 Observações importantes</h3>
+        <ul>
+          <li>🎁 Presentes devem ser <b>novos</b> e adequados à faixa etária informada.</li>
+          <li>🔒 Evite incluir <b>informações pessoais</b> dentro do pacote.</li>
+          <li>📦 Não pode ir ao evento? Entregue no <b>ponto de coleta</b>.</li>
+          <li>☁️ Dúvidas? Fale com o <b>Cloudinho</b> ou envie um e-mail para <b>varaldossonhossp@gmail.com</b>.</li>
+        </ul>
 
-          <div class="cf-cta">
-            <p>Pronto para realizar um sonho?</p>
-            <a class="cf-btn" href="cartinha.html">
-              💙 Quero adotar um sonho
-            </a>
-            <small>Você será direcionado(a) ao nosso Varal Virtual.</small>
-          </div>
-        </aside>
+        <!-- Ajuste o href se o caminho do Varal for diferente -->
+        <a href="cartinha.html" class="cf-btn">💙 Quero adotar um sonho</a>
       </div>
     </section>
   </main>
@@ -317,11 +166,11 @@
   <script src="../js/header.js"></script>
   <script src="../js/footer.js"></script>
 
-  <!-- Lightbox (caso queira usar imagens nessa página também) -->
+  <!-- Lightbox global (mantido para consistência do site) -->
   <div id="lightbox" aria-hidden="true">
     <button class="lb-close" aria-label="Fechar (ESC)">×</button>
     <button class="lb-nav lb-prev" aria-label="Imagem anterior">‹</button>
-    <img class="lb-img" alt="Imagem ampliada" />
+    <img class="lb-img" alt="Imagem ampliada do evento" />
     <button class="lb-nav lb-next" aria-label="Próxima imagem">›</button>
   </div>
 </body>
