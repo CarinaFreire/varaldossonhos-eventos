@@ -1,22 +1,41 @@
-/* COMO FUNCIONA*/
+/* ============================================================
+🎈 PÁGINA: COMO FUNCIONA
+Estilo limpo, fluido e harmônico com o restante do site
+============================================================ */
+
+/* Seção principal */
+.como-funciona-content {
+  text-align: center;
+}
+
+/* Imagem da nuvem no topo */
 .cf-hero-img {
   width: 300px;
   max-width: 80%;
   margin: 0 auto 10px;
+  display: block;
+  width: 350px;
+  animation: flutuar 2s ease-in-out infinite;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 6px 10px rgba(74, 144, 226, 0.25));
+  margin: 0 auto 8px;
 }
 
+/* Título e subtítulo */
 .cf-title {
   font-size: 2rem;
-  color: #5b8ef1; 
-  margin-bottom: 6px;
+  color: #5b8ef1; /* tom igual ao da Agenda de Eventos */
+  margin: 6px 0 6px;
+  font-weight: 700;
 }
 
 .cf-sub {
   color: #475569;
   font-size: 1rem;
-  margin-bottom: 28px;
+  margin: 0 0 28px;
 }
 
+/* Etapas */
 .cf-steps {
   display: grid;
   gap: 18px;
@@ -41,8 +60,9 @@
   box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08);
 }
 
+/* Ícone circular à esquerda */
 .cf-icon {
-  background: #3b82f6;
+  background: #5b8ef1;
   color: #fff;
   border-radius: 50%;
   width: 36px;
@@ -51,8 +71,10 @@
   align-items: center;
   justify-content: center;
   font-size: 18px;
+  flex: 0 0 36px;
 }
 
+/* Texto da etapa */
 .cf-step p {
   margin: 0;
   font-size: 0.95rem;
@@ -64,20 +86,23 @@
   color: #0f172a;
 }
 
-/* Observações finais */
+/* Observações importantes */
 .cf-observacoes {
   background: #eff6ff;
   border: 1px solid #dbeafe;
   border-radius: 16px;
   padding: 20px;
   max-width: 760px;
-  margin: 0 auto;
+  margin: 0 auto 26px;
+  text-align: left;
 }
 
 .cf-observacoes h3 {
-  color: #3b82f6;
-  margin-bottom: 10px;
+  color: #5b8ef1;
+  margin: 0 0 10px;
   font-size: 1.15rem;
+  text-align: center;
+  font-weight: 600;
 }
 
 .cf-observacoes ul {
@@ -92,17 +117,47 @@
   margin-bottom: 6px;
 }
 
+/* Botão principal */
+.cf-btn-wrap {
+  text-align: center;
+  margin-top: 16px;
+}
+
 .cf-btn {
   display: inline-block;
-  background: #3b82f6;
+  background: #5b8ef1;
   color: #fff;
-  padding: 10px 24px;
+  padding: 12px 32px;
   border-radius: 999px;
   text-decoration: none;
   font-weight: 600;
-  transition: background 0.2s ease;
+  font-size: 1rem;
+  box-shadow: 0 8px 16px rgba(91, 142, 241, 0.25);
+  transition: background 0.2s ease, transform 0.1s ease;
+  text-align: center;
 }
 
 .cf-btn:hover {
-  background: #2563eb;
+  background: #4a7de4;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(91, 142, 241, 0.35);
+}
+
+/* Container da página */
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+/* Responsividade */
+@media (max-width: 640px) {
+  .cf-step {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+  .cf-icon {
+    margin-bottom: 6px;
+  }
 }
